@@ -1,5 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 
 namespace FormulaGaussExample
@@ -47,9 +48,15 @@ namespace FormulaGaussExample
         }
 
         // Método para ejecutar consultas
-        public MySqlDataReader EjecutarConsulta(string query)
+        public MySqlDataReader EjecutarConsulta(string query, Dictionary<string, object> parametros)
         {
             MySqlCommand comando = new MySqlCommand(query, conexion);
+
+            foreach (var p in parametros)
+            {
+                comando.Parameters.AddWithValue(p.Key, p.Value);
+            }
+
             return comando.ExecuteReader();
         }
 

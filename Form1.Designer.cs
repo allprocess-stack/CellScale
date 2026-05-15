@@ -45,17 +45,17 @@
             this.tsmiAbrirBalanza = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCerrarBalanza = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGuardarMenu = new System.Windows.Forms.ToolStripMenuItem();
-            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsddbConfiguracion = new System.Windows.Forms.ToolStripDropDownButton();
             this.tsmiCalibraciónBalanza = new System.Windows.Forms.ToolStripMenuItem();
             this.tstbCalibracion = new System.Windows.Forms.ToolStripTextBox();
             this.tsmiAbrirCalibracion = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCerarCalibracion = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGuardarConfiguracion = new System.Windows.Forms.ToolStripMenuItem();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -124,7 +124,7 @@
             this.tsmiUsuario.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtUsuario});
             this.tsmiUsuario.Name = "tsmiUsuario";
-            this.tsmiUsuario.Size = new System.Drawing.Size(224, 26);
+            this.tsmiUsuario.Size = new System.Drawing.Size(187, 26);
             this.tsmiUsuario.Text = "USUARIO";
             // 
             // txtUsuario
@@ -138,7 +138,7 @@
             this.tsmiContraseña.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtContraseña});
             this.tsmiContraseña.Name = "tsmiContraseña";
-            this.tsmiContraseña.Size = new System.Drawing.Size(224, 26);
+            this.tsmiContraseña.Size = new System.Drawing.Size(187, 26);
             this.tsmiContraseña.Text = "CONTRASEÑA";
             // 
             // txtContraseña
@@ -150,7 +150,7 @@
             // tsmiIngresar
             // 
             this.tsmiIngresar.Name = "tsmiIngresar";
-            this.tsmiIngresar.Size = new System.Drawing.Size(224, 26);
+            this.tsmiIngresar.Size = new System.Drawing.Size(187, 26);
             this.tsmiIngresar.Text = "INGRESAR";
             this.tsmiIngresar.Click += new System.EventHandler(this.tsmiIngresar_Click);
             // 
@@ -187,18 +187,68 @@
             this.tsmiAbrirBalanza.Name = "tsmiAbrirBalanza";
             this.tsmiAbrirBalanza.Size = new System.Drawing.Size(224, 26);
             this.tsmiAbrirBalanza.Text = "Abrir";
+            this.tsmiAbrirBalanza.Click += new System.EventHandler(this.tsmiAbrirBalanza_Click);
             // 
             // tsmiCerrarBalanza
             // 
             this.tsmiCerrarBalanza.Name = "tsmiCerrarBalanza";
             this.tsmiCerrarBalanza.Size = new System.Drawing.Size(224, 26);
             this.tsmiCerrarBalanza.Text = "Cerrar";
+            this.tsmiCerrarBalanza.Click += new System.EventHandler(this.tsmiCerrarBalanza_Click);
             // 
             // tsmiGuardarMenu
             // 
             this.tsmiGuardarMenu.Name = "tsmiGuardarMenu";
             this.tsmiGuardarMenu.Size = new System.Drawing.Size(240, 26);
             this.tsmiGuardarMenu.Text = "Guardar configuración";
+            this.tsmiGuardarMenu.Click += new System.EventHandler(this.tsmiGuardarMenu_Click);
+            // 
+            // tsddbConfiguracion
+            // 
+            this.tsddbConfiguracion.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsddbConfiguracion.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiCalibraciónBalanza,
+            this.tsmiGuardarConfiguracion});
+            this.tsddbConfiguracion.Image = ((System.Drawing.Image)(resources.GetObject("tsddbConfiguracion.Image")));
+            this.tsddbConfiguracion.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsddbConfiguracion.Name = "tsddbConfiguracion";
+            this.tsddbConfiguracion.Size = new System.Drawing.Size(139, 24);
+            this.tsddbConfiguracion.Text = "CONFIGURACIÓN";
+            // 
+            // tsmiCalibraciónBalanza
+            // 
+            this.tsmiCalibraciónBalanza.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tstbCalibracion,
+            this.tsmiAbrirCalibracion,
+            this.tsmiCerarCalibracion});
+            this.tsmiCalibraciónBalanza.Name = "tsmiCalibraciónBalanza";
+            this.tsmiCalibraciónBalanza.Size = new System.Drawing.Size(242, 26);
+            this.tsmiCalibraciónBalanza.Text = "Calibración Balanza";
+            // 
+            // tstbCalibracion
+            // 
+            this.tstbCalibracion.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.tstbCalibracion.Name = "tstbCalibracion";
+            this.tstbCalibracion.Size = new System.Drawing.Size(100, 27);
+            // 
+            // tsmiAbrirCalibracion
+            // 
+            this.tsmiAbrirCalibracion.Name = "tsmiAbrirCalibracion";
+            this.tsmiAbrirCalibracion.Size = new System.Drawing.Size(174, 26);
+            this.tsmiAbrirCalibracion.Text = "ABRIR";
+            // 
+            // tsmiCerarCalibracion
+            // 
+            this.tsmiCerarCalibracion.Name = "tsmiCerarCalibracion";
+            this.tsmiCerarCalibracion.Size = new System.Drawing.Size(174, 26);
+            this.tsmiCerarCalibracion.Text = "CERRAR";
+            // 
+            // tsmiGuardarConfiguracion
+            // 
+            this.tsmiGuardarConfiguracion.Name = "tsmiGuardarConfiguracion";
+            this.tsmiGuardarConfiguracion.Size = new System.Drawing.Size(242, 26);
+            this.tsmiGuardarConfiguracion.Text = "Guardar Configuración";
+            this.tsmiGuardarConfiguracion.Click += new System.EventHandler(this.tsmiGuardarConfiguracion_Click);
             // 
             // statusStrip1
             // 
@@ -241,52 +291,6 @@
             this.toolStripStatusLabel4.Size = new System.Drawing.Size(25, 20);
             this.toolStripStatusLabel4.Text = "1S";
             // 
-            // tsddbConfiguracion
-            // 
-            this.tsddbConfiguracion.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsddbConfiguracion.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiCalibraciónBalanza,
-            this.tsmiGuardarConfiguracion});
-            this.tsddbConfiguracion.Image = ((System.Drawing.Image)(resources.GetObject("tsddbConfiguracion.Image")));
-            this.tsddbConfiguracion.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsddbConfiguracion.Name = "tsddbConfiguracion";
-            this.tsddbConfiguracion.Size = new System.Drawing.Size(139, 24);
-            this.tsddbConfiguracion.Text = "CONFIGURACIÓN";
-            // 
-            // tsmiCalibraciónBalanza
-            // 
-            this.tsmiCalibraciónBalanza.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tstbCalibracion,
-            this.tsmiAbrirCalibracion,
-            this.tsmiCerarCalibracion});
-            this.tsmiCalibraciónBalanza.Name = "tsmiCalibraciónBalanza";
-            this.tsmiCalibraciónBalanza.Size = new System.Drawing.Size(242, 26);
-            this.tsmiCalibraciónBalanza.Text = "Calibración Balanza";
-            // 
-            // tstbCalibracion
-            // 
-            this.tstbCalibracion.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.tstbCalibracion.Name = "tstbCalibracion";
-            this.tstbCalibracion.Size = new System.Drawing.Size(100, 27);
-            // 
-            // tsmiAbrirCalibracion
-            // 
-            this.tsmiAbrirCalibracion.Name = "tsmiAbrirCalibracion";
-            this.tsmiAbrirCalibracion.Size = new System.Drawing.Size(224, 26);
-            this.tsmiAbrirCalibracion.Text = "ABRIR";
-            // 
-            // tsmiCerarCalibracion
-            // 
-            this.tsmiCerarCalibracion.Name = "tsmiCerarCalibracion";
-            this.tsmiCerarCalibracion.Size = new System.Drawing.Size(224, 26);
-            this.tsmiCerarCalibracion.Text = "CERRAR";
-            // 
-            // tsmiGuardarConfiguracion
-            // 
-            this.tsmiGuardarConfiguracion.Name = "tsmiGuardarConfiguracion";
-            this.tsmiGuardarConfiguracion.Size = new System.Drawing.Size(242, 26);
-            this.tsmiGuardarConfiguracion.Text = "Guardar Configuración";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -300,6 +304,7 @@
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
