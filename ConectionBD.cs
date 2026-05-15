@@ -47,7 +47,7 @@ namespace FormulaGaussExample
             }
         }
 
-        // Método para ejecutar consultas
+        // Método para ejecutar consultas(SELECT)
         public MySqlDataReader EjecutarConsulta(string query, Dictionary<string, object> parametros)
         {
             MySqlCommand comando = new MySqlCommand(query, conexion);
@@ -59,6 +59,22 @@ namespace FormulaGaussExample
 
             return comando.ExecuteReader();
         }
+
+        // Método para ejecutar consultas
+        public int EjecutarNonQuery(string query, Dictionary<string, object> parametros)
+        {
+            using (var comando = new MySqlCommand(query, conexion))
+            {
+                foreach (var p in parametros)
+                {
+                    comando.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+                }
+
+                // Ejecuta el comando y devuelve el número de filas afectadas
+                return comando.ExecuteNonQuery();
+            }
+        }
+
 
         // Propiedad para obtener la conexión
         public MySqlConnection ObtenerConexion()

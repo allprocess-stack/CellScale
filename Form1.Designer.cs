@@ -28,16 +28,16 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.btnRegistrar = new System.Windows.Forms.Button();
             this.lblBalanza = new System.Windows.Forms.Label();
             this.txtBalanza = new System.Windows.Forms.TextBox();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.tsddbLogin = new System.Windows.Forms.ToolStripSplitButton();
+            this.tsddbtnLogin = new System.Windows.Forms.ToolStripDropDownButton();
             this.tsmiUsuario = new System.Windows.Forms.ToolStripMenuItem();
             this.txtUsuario = new System.Windows.Forms.ToolStripTextBox();
             this.tsmiContraseña = new System.Windows.Forms.ToolStripMenuItem();
-            this.txtContraseña = new System.Windows.Forms.ToolStripTextBox();
             this.tsmiIngresar = new System.Windows.Forms.ToolStripMenuItem();
             this.tsddbMenu = new System.Windows.Forms.ToolStripDropDownButton();
             this.tsmiBalanza = new System.Windows.Forms.ToolStripMenuItem();
@@ -53,9 +53,14 @@
             this.tsmiGuardarConfiguracion = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslblStatusConexion = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslblTiempoConexion = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslblTrama = new System.Windows.Forms.ToolStripStatusLabel();
+            this.timerTiempoConexion = new System.Windows.Forms.Timer(this.components);
+            this.timerDataTrama = new System.Windows.Forms.Timer(this.components);
+            this.txtContrasena = new System.Windows.Forms.ToolStripTextBox();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -75,7 +80,7 @@
             // 
             this.lblBalanza.AutoSize = true;
             this.lblBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 48F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBalanza.Location = new System.Drawing.Point(35, 102);
+            this.lblBalanza.Location = new System.Drawing.Point(13, 103);
             this.lblBalanza.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblBalanza.Name = "lblBalanza";
             this.lblBalanza.Size = new System.Drawing.Size(791, 91);
@@ -96,7 +101,7 @@
             // 
             this.toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsddbLogin,
+            this.tsddbtnLogin,
             this.tsddbMenu,
             this.tsddbConfiguracion});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
@@ -106,25 +111,25 @@
             this.toolStrip1.Text = "toolStrip1";
             this.toolStrip1.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.toolStrip1_ItemClicked);
             // 
-            // tsddbLogin
+            // tsddbtnLogin
             // 
-            this.tsddbLogin.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsddbLogin.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsddbtnLogin.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsddbtnLogin.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiUsuario,
             this.tsmiContraseña,
             this.tsmiIngresar});
-            this.tsddbLogin.Image = ((System.Drawing.Image)(resources.GetObject("tsddbLogin.Image")));
-            this.tsddbLogin.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsddbLogin.Name = "tsddbLogin";
-            this.tsddbLogin.Size = new System.Drawing.Size(70, 24);
-            this.tsddbLogin.Text = "LOGIN";
+            this.tsddbtnLogin.Image = ((System.Drawing.Image)(resources.GetObject("tsddbtnLogin.Image")));
+            this.tsddbtnLogin.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsddbtnLogin.Name = "tsddbtnLogin";
+            this.tsddbtnLogin.Size = new System.Drawing.Size(65, 24);
+            this.tsddbtnLogin.Text = "LOGIN";
             // 
             // tsmiUsuario
             // 
             this.tsmiUsuario.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtUsuario});
             this.tsmiUsuario.Name = "tsmiUsuario";
-            this.tsmiUsuario.Size = new System.Drawing.Size(187, 26);
+            this.tsmiUsuario.Size = new System.Drawing.Size(224, 26);
             this.tsmiUsuario.Text = "USUARIO";
             // 
             // txtUsuario
@@ -136,21 +141,15 @@
             // tsmiContraseña
             // 
             this.tsmiContraseña.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.txtContraseña});
+            this.txtContrasena});
             this.tsmiContraseña.Name = "tsmiContraseña";
-            this.tsmiContraseña.Size = new System.Drawing.Size(187, 26);
+            this.tsmiContraseña.Size = new System.Drawing.Size(224, 26);
             this.tsmiContraseña.Text = "CONTRASEÑA";
-            // 
-            // txtContraseña
-            // 
-            this.txtContraseña.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.txtContraseña.Name = "txtContraseña";
-            this.txtContraseña.Size = new System.Drawing.Size(100, 27);
             // 
             // tsmiIngresar
             // 
             this.tsmiIngresar.Name = "tsmiIngresar";
-            this.tsmiIngresar.Size = new System.Drawing.Size(187, 26);
+            this.tsmiIngresar.Size = new System.Drawing.Size(224, 26);
             this.tsmiIngresar.Text = "INGRESAR";
             this.tsmiIngresar.Click += new System.EventHandler(this.tsmiIngresar_Click);
             // 
@@ -185,14 +184,14 @@
             // tsmiAbrirBalanza
             // 
             this.tsmiAbrirBalanza.Name = "tsmiAbrirBalanza";
-            this.tsmiAbrirBalanza.Size = new System.Drawing.Size(224, 26);
+            this.tsmiAbrirBalanza.Size = new System.Drawing.Size(195, 26);
             this.tsmiAbrirBalanza.Text = "Abrir";
             this.tsmiAbrirBalanza.Click += new System.EventHandler(this.tsmiAbrirBalanza_Click);
             // 
             // tsmiCerrarBalanza
             // 
             this.tsmiCerrarBalanza.Name = "tsmiCerrarBalanza";
-            this.tsmiCerrarBalanza.Size = new System.Drawing.Size(224, 26);
+            this.tsmiCerrarBalanza.Size = new System.Drawing.Size(195, 26);
             this.tsmiCerrarBalanza.Text = "Cerrar";
             this.tsmiCerrarBalanza.Click += new System.EventHandler(this.tsmiCerrarBalanza_Click);
             // 
@@ -255,9 +254,11 @@
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
-            this.toolStripStatusLabel2,
+            this.tsslblStatusConexion,
             this.toolStripStatusLabel3,
-            this.toolStripStatusLabel4});
+            this.tsslblTiempoConexion,
+            this.toolStripStatusLabel2,
+            this.tsslblTrama});
             this.statusStrip1.Location = new System.Drawing.Point(0, 688);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 19, 0);
@@ -269,14 +270,14 @@
             // 
             this.toolStripStatusLabel1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(172, 20);
-            this.toolStripStatusLabel1.Text = "CONEXCIÓN BALANZA";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(163, 20);
+            this.toolStripStatusLabel1.Text = "CONEXIÓN BALANZA";
             // 
-            // toolStripStatusLabel2
+            // tsslblStatusConexion
             // 
-            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(75, 20);
-            this.toolStripStatusLabel2.Text = "BALANZA";
+            this.tsslblStatusConexion.Name = "tsslblStatusConexion";
+            this.tsslblStatusConexion.Size = new System.Drawing.Size(50, 20);
+            this.tsslblStatusConexion.Text = "NONE";
             // 
             // toolStripStatusLabel3
             // 
@@ -285,11 +286,38 @@
             this.toolStripStatusLabel3.Size = new System.Drawing.Size(159, 20);
             this.toolStripStatusLabel3.Text = "TIEMPO CONECTADO";
             // 
-            // toolStripStatusLabel4
+            // tsslblTiempoConexion
             // 
-            this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
-            this.toolStripStatusLabel4.Size = new System.Drawing.Size(25, 20);
-            this.toolStripStatusLabel4.Text = "1S";
+            this.tsslblTiempoConexion.Name = "tsslblTiempoConexion";
+            this.tsslblTiempoConexion.Size = new System.Drawing.Size(25, 20);
+            this.tsslblTiempoConexion.Text = "0S";
+            // 
+            // toolStripStatusLabel2
+            // 
+            this.toolStripStatusLabel2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(49, 20);
+            this.toolStripStatusLabel2.Text = "DATA";
+            // 
+            // tsslblTrama
+            // 
+            this.tsslblTrama.Name = "tsslblTrama";
+            this.tsslblTrama.Size = new System.Drawing.Size(50, 20);
+            this.tsslblTrama.Text = "NONE";
+            // 
+            // timerTiempoConexion
+            // 
+            this.timerTiempoConexion.Tick += new System.EventHandler(this.tsslblTiempoConexion_Tick);
+            // 
+            // timerDataTrama
+            // 
+            this.timerDataTrama.Tick += new System.EventHandler(this.timerDataTrama_Tick);
+            // 
+            // txtContrasena
+            // 
+            this.txtContrasena.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.txtContrasena.Name = "txtContrasena";
+            this.txtContrasena.Size = new System.Drawing.Size(121, 27);
             // 
             // Form1
             // 
@@ -320,11 +348,6 @@
         private System.Windows.Forms.Label lblBalanza;
         private System.Windows.Forms.TextBox txtBalanza;
         private System.Windows.Forms.ToolStrip toolStrip1;
-        //private System.Windows.Forms.ToolStripSplitButton toolStripSplitButton1;
-        private System.Windows.Forms.ToolStripSplitButton tsddbLogin;
-        private System.Windows.Forms.ToolStripMenuItem tsmiUsuario;
-        private System.Windows.Forms.ToolStripMenuItem tsmiContraseña;
-        private System.Windows.Forms.ToolStripMenuItem tsmiIngresar;
         private System.Windows.Forms.ToolStripDropDownButton tsddbMenu;
         private System.Windows.Forms.ToolStripMenuItem tsmiBalanza;
         private System.Windows.Forms.ToolStripMenuItem tsmiGuardarMenu;
@@ -333,17 +356,27 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiCerrarBalanza;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
+        private System.Windows.Forms.ToolStripStatusLabel tsslblStatusConexion;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel4;
-        private System.Windows.Forms.ToolStripTextBox txtUsuario;
-        private System.Windows.Forms.ToolStripTextBox txtContraseña;
+        private System.Windows.Forms.ToolStripStatusLabel tsslblTiempoConexion;
         private System.Windows.Forms.ToolStripDropDownButton tsddbConfiguracion;
         private System.Windows.Forms.ToolStripMenuItem tsmiCalibraciónBalanza;
         private System.Windows.Forms.ToolStripTextBox tstbCalibracion;
         private System.Windows.Forms.ToolStripMenuItem tsmiAbrirCalibracion;
         private System.Windows.Forms.ToolStripMenuItem tsmiCerarCalibracion;
         private System.Windows.Forms.ToolStripMenuItem tsmiGuardarConfiguracion;
+        private System.Windows.Forms.Timer timerTiempoConexion;
+        private System.Windows.Forms.Timer timerDataTrama;
+        private System.Windows.Forms.ToolStripDropDownButton tsddbtnLogin;
+        private System.Windows.Forms.ToolStripMenuItem tsmiUsuario;
+        private System.Windows.Forms.ToolStripMenuItem tsmiContraseña;
+        private System.Windows.Forms.ToolStripMenuItem tsmiIngresar;
+        //private System.Windows.Forms.ToolStripTextBox txtUsuario;
+        //private System.Windows.Forms.ToolStripTextBox txtContraseña;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
+        private System.Windows.Forms.ToolStripStatusLabel tsslblTrama;
+        private System.Windows.Forms.ToolStripTextBox txtUsuario;
+        private System.Windows.Forms.ToolStripTextBox txtContrasena;
     }
 }
 

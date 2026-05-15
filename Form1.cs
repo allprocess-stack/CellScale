@@ -8,7 +8,6 @@ using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO.Ports;
 using System.Windows.Forms;
 
 namespace FormulaGaussExample
@@ -17,6 +16,16 @@ namespace FormulaGaussExample
     {
         private AppConfig config;
         private ConectionBD conexion;
+        private CeldaManager manager;
+
+        // Variables para manejar el estado de la balanza
+        private bool balanzaConectada = false;
+        private DateTime tiempoInicioConexion;
+        private DateTime tiempoInicioDesconexion;
+        private bool ultimaTramaRecibida = false;
+
+
+
         public Form1()
         {
             InitializeComponent();
@@ -34,7 +43,43 @@ namespace FormulaGaussExample
         private void Form1_Load(object sender, EventArgs e)
         {
             CargarPuertosCOM();
+
+            manager = new CeldaManager();
+            manager.TramaRecibida += Manager_TramaRecibida;
+
+            // Al iniciar el programa, asumimos que está desconectada
+            balanzaConectada = false;
+            tiempoInicioDesconexion = DateTime.Now;
+
+            // Configura el timer para actualizar el tiempo de conexion
+            timerTiempoConexion.Interval = 1000;
+            timerTiempoConexion.Start();
         }
+
+        // Evento que se dispara cuando el CeldaManager recibe tramas
+        private void Manager_TramaRecibida(string trama)
+        {
+            // Como viene de otro hilo, usa Invoke
+            this.Invoke(new Action(() =>
+            {
+                if (!string.IsNullOrEmpty(trama) && !trama.StartsWith("ERROR"))
+                {
+                    tsslblTrama.Text = "Trama recibida";
+                    tsslblTrama.ForeColor = Color.Green;
+                }
+                else if (trama.StartsWith("ERROR"))
+                {
+                    tsslblTrama.Text = "Error trama";
+                    tsslblTrama.ForeColor = Color.OrangeRed;
+                }
+                else
+                {
+                    tsslblTrama.Text = "Sin trama";
+                    tsslblTrama.ForeColor = Color.Red;
+                }
+            }));
+        }
+
 
         private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
@@ -61,7 +106,7 @@ namespace FormulaGaussExample
             try {
                 // Varibles
                 string usuario = txtUsuario.Text.Trim();
-                string contrasena= txtContraseña.Text.Trim();
+                string contrasena= txtContrasena.Text.Trim();
 
                 if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(contrasena))
                 {
@@ -111,10 +156,9 @@ namespace FormulaGaussExample
                     {"@COM", conexionBalanza }
                 };
 
-                string query = "INSERT INTO(COM) VALUES(@COM)";
-                using (var reader = conexion.EjecutarConsulta(query,parametros))
-                {
-                    if (reader.Read())
+                string query = "INSERT INTO balanza (COM) VALUES(@COM)";
+                int filas = conexion.EjecutarNonQuery(query, parametros);
+                    if (filas>0)
                     {
                         MessageBox.Show("Configuración guardada correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
@@ -122,7 +166,6 @@ namespace FormulaGaussExample
                     {
                         MessageBox.Show("Error al guardar configuración", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-                }
 
             }catch(Exception ex)
             {
@@ -147,6 +190,10 @@ namespace FormulaGaussExample
             MessageBox.Show($"Balanza conectada al puerto {puertoBalanza}", "Conexión exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             menu.AutoClose = true; // vuelve al comportamiento normal
+
+            // Actualiza estado de conexión
+            balanzaConectada = true;
+            tiempoInicioConexion = DateTime.Now;
         }
 
         private void tsmiCerrarBalanza_Click(object sender, EventArgs e)
@@ -158,6 +205,10 @@ namespace FormulaGaussExample
             MessageBox.Show("Balanza desconectada correctamente.", "Desconexión", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             menu.AutoClose = true;
+
+            // Actualiza estado de conexión
+            balanzaConectada = false;
+            tiempoInicioDesconexion = DateTime.Now;
         }
 
         private void tsmiGuardarConfiguracion_Click(object sender, EventArgs e)
@@ -218,6 +269,42 @@ namespace FormulaGaussExample
             }
         }
 
-        
+        private void tsslblTiempoConexion_Tick(object sender, EventArgs e)
+        {
+            TimeSpan tiempo;
+
+            if (balanzaConectada)
+            {
+                tiempo = DateTime.Now - tiempoInicioConexion;
+                tsslblStatusConexion.Text = "Conectado";
+                tsslblStatusConexion.ForeColor = Color.Green;
+                tsslblTiempoConexion.Text = $"{tiempo:hh\\:mm\\:ss}";
+                tsslblTiempoConexion.ForeColor = Color.Green;
+            }
+            else
+            {
+                tiempo = DateTime.Now - tiempoInicioDesconexion;
+                tsslblStatusConexion.Text = "Desconectado";
+                tsslblStatusConexion.ForeColor = Color.Red;
+                tsslblTiempoConexion.Text = $"{tiempo:hh\\:mm\\:ss}";
+                tsslblTiempoConexion.ForeColor = Color.Red;
+            }
+        }
+
+        private void timerDataTrama_Tick(object sender, EventArgs e)
+        {
+            if (ultimaTramaRecibida)
+            {
+                tsslblTrama.Text = "Sin Trama";
+                tsslblTrama.ForeColor = Color.Red;
+            }
+            else
+            {
+                tsslblTrama.Text = "Recepción de Trama";
+                tsslblTrama.ForeColor = Color.Green;
+            }
+            // Reinicia el estado para la siguiente verificación
+            ultimaTramaRecibida = false;
+        }
     }
 }
