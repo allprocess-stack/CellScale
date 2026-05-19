@@ -10,7 +10,8 @@ contrasena varchar(100)
 create table peso(
 id int primary key auto_increment,
 peso varchar(100),
-fecha datetime
+fecha datetime,
+celda_id int
 );
 
 create table configuracion(

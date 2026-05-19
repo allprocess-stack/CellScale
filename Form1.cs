@@ -1,73 +1,211 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace FormulaGaussExample
 {
+    /// <summary>
+    /// Formulario principal de la aplicación de báscula multicelda.
+    /// Gestiona la conexión a la balanza vía RS-485, la visualización de pesos
+    /// individuales y unificados, la calibración del sistema y el registro
+    /// de pesadas en la base de datos MySQL.
+    /// </summary>
     public partial class Form1 : Form
     {
+        // Configuración de la aplicación cargada desde config.json
         private AppConfig config;
+
+        // Conexión a la base de datos MySQL
         private ConectionBD conexion;
+
+        // Manager de comunicación con las celdas de carga
         private CeldaManager manager;
 
-        // Variables para manejar el estado de la balanza
+        // Dirección de la celda actualmente seleccionada en la UI
+        private int celdaSeleccionada = 1;
+
+        // Último peso calibrado registrado (para usar en el registro en BD)
+        private double ultimoPesoCalibrado = 0;
+
+        // Estado de conexión de la balanza
         private bool balanzaConectada = false;
+
+        // Tiempo de inicio de la conexión/desconexión actual
         private DateTime tiempoInicioConexion;
         private DateTime tiempoInicioDesconexion;
+
+        // Indica si se recibió al menos una trama válida en el último intervalo
         private bool ultimaTramaRecibida = false;
 
+        // Labels creados programáticamente para mostrar pesos (no existen en el diseñador)
+        private Label lblPesoUnificado;
+        private Label lblPesoIndividual;
 
-
+        /// <summary>
+        /// Inicializa el formulario principal.
+        /// Carga la configuración desde config.json, establece la conexión con la
+        /// base de datos y configura la visibilidad inicial de los menús.
+        /// </summary>
         public Form1()
         {
             InitializeComponent();
-            //Opcion de Menu y Configuracion ocultas hasta que se loguee
+
+            // Ocultar menús hasta que el usuario inicie sesión
             tsddbMenu.Visible = false;
             tsddbConfiguracion.Visible = false;
-            config = ConfigManager.CargarConfig();
-            Console.WriteLine($"Conectando a {config.Servidor}:{config.Puerto} / BD: {config.BD}");
 
-            // Inicializar conexión con la configuración
-            conexion = new ConectionBD(config);
-            conexion.AbrirConexion();
+            // Cargar configuración desde config.json
+            config = ConfigManager.CargarConfig();
+
+            // Verificar que la configuración se haya cargado correctamente
+            if (config == null)
+            {
+                MessageBox.Show("No se pudo cargar la configuración. Verifique el archivo config.json.\n" +
+                               "Se utilizarán valores por defecto.",
+                    "Error crítico", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Crear configuración por defecto para evitar null reference
+                config = new AppConfig
+                {
+                    Servidor = "localhost",
+                    BD = "bdCellScale",
+                    Puerto = "3306",
+                    Usuario = "root",
+                    Contrasena = "",
+                    COMBalanza = "COM3",
+                    CalibracionBalanza = "10000"
+                };
+            }
+
+            Console.WriteLine($"Configuración cargada: {config.Servidor}:{config.Puerto} / BD: {config.BD}");
+
+            // Intentar conectar a la base de datos
+            try
+            {
+                conexion = new ConectionBD(config);
+                conexion.AbrirConexion();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al conectar a la base de datos: {ex.Message}");
+                // La aplicación puede continuar sin BD para pesaje local
+                // El registro de pesos requerirá BD funcionando
+            }
         }
 
+        /// <summary>
+        /// Carga los puertos COM disponibles, la configuración de celdas,
+        /// configura los timers y crea los labels de peso dinámicos.
+        /// Se ejecuta al cargar el formulario.
+        /// </summary>
         private void Form1_Load(object sender, EventArgs e)
         {
             CargarPuertosCOM();
+            CargarCeldasConfig();
+            CargarSlaveNumbers();
 
+            // Inicializar el manager de celdas y suscribir eventos
             manager = new CeldaManager();
             manager.TramaRecibida += Manager_TramaRecibida;
+            manager.PesoActualizado += Manager_PesoActualizado;
+            manager.CeldasEnumeradas += Manager_CeldasEnumeradas;
 
-            // Al iniciar el programa, asumimos que está desconectada
+            // Estado inicial de conexión
             balanzaConectada = false;
             tiempoInicioDesconexion = DateTime.Now;
 
-            // Configura el timer para actualizar el tiempo de conexion
+            // Timer para mostrar el tiempo de conexión/desconexión en la barra de estado
             timerTiempoConexion.Interval = 1000;
             timerTiempoConexion.Start();
+
+            // Timer de verificación de trama (se inicia al conectar la balanza)
+            timerDataTrama.Interval = 1000;
+
+            // Deshabilitar botón de registro hasta que la balanza esté conectada
+            btnRegistrar.Enabled = false;
+
+            // Configurar el timer de pesaje (declarado en Form1.Designer.cs)
+            // Este timer consulta el peso periódicamente cuando la balanza está conectada
+            TimerPesaje.Interval = 1000;
+
+            // Configurar campo de contraseña para ocultar caracteres
+            // Se accede al TextBox subyacente porque ToolStripTextBox no expone PasswordChar directamente
+            txtContrasena.TextBox.PasswordChar = '*';
+
+            // Crear labels dinámicos para mostrar pesos si no existen en el diseñador
+            if (lblPesoUnificado == null)
+            {
+                lblPesoUnificado = new Label();
+                lblPesoUnificado.Text = "Peso Total: 0.00 kg";
+                lblPesoUnificado.Location = new Point(10, 200);
+                this.Controls.Add(lblPesoUnificado);
+            }
+
+            if (lblPesoIndividual == null)
+            {
+                lblPesoIndividual = new Label();
+                lblPesoIndividual.Text = "Celda #01: 0.00 kg";
+                lblPesoIndividual.Location = new Point(10, 220);
+                this.Controls.Add(lblPesoIndividual);
+            }
         }
 
-        // Evento que se dispara cuando el CeldaManager recibe tramas
+        /// <summary>
+        /// Carga las direcciones esclavo disponibles (1 a 15) en el combobox
+        /// de selección de celda. La dirección 0 no se usa según el protocolo.
+        /// </summary>
+        private void CargarSlaveNumbers()
+        {
+            tscbSlave.Items.Clear();
+            for (int i = 1; i <= 15; i++)
+            {
+                tscbSlave.Items.Add(i.ToString("D2"));
+            }
+            if (tscbSlave.Items.Count > 0)
+                tscbSlave.SelectedIndex = 0;
+        }
+
+        /// <summary>
+        /// Carga los factores de calibración guardados en la configuración
+        /// hacia el manager de celdas para aplicarlos a las lecturas.
+        /// </summary>
+        private void CargarCeldasConfig()
+        {
+            if (config.FactoresCalibracion == null)
+                config.FactoresCalibracion = new Dictionary<string, double>();
+
+            if (manager != null)
+            {
+                foreach (var factor in config.FactoresCalibracion)
+                {
+                    if (factor.Key.StartsWith("CELDA_") && int.TryParse(factor.Key.Substring(6), out int direccion))
+                    {
+                        manager.SetFactorCalibracion(direccion, factor.Value);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Maneja el evento de trama recibida desde el puerto serial.
+        /// Actualiza el indicador de estado "DATA" en la barra de estado
+        /// según si la trama es válida, contiene error o está vacía.
+        /// </summary>
         private void Manager_TramaRecibida(string trama)
         {
-            // Como viene de otro hilo, usa Invoke
             this.Invoke(new Action(() =>
             {
                 if (!string.IsNullOrEmpty(trama) && !trama.StartsWith("ERROR"))
                 {
                     tsslblTrama.Text = "Trama recibida";
                     tsslblTrama.ForeColor = Color.Green;
+                    ultimaTramaRecibida = true;
                 }
-                else if (trama.StartsWith("ERROR"))
+                else if (trama != null && trama.StartsWith("ERROR"))
                 {
                     tsslblTrama.Text = "Error trama";
                     tsslblTrama.ForeColor = Color.OrangeRed;
@@ -80,33 +218,61 @@ namespace FormulaGaussExample
             }));
         }
 
-
-        private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        /// <summary>
+        /// Maneja el evento de peso actualizado de una celda.
+        /// Actualiza los labels de peso individual (celda seleccionada)
+        /// y peso total unificado (suma de todas las celdas).
+        /// Se ejecuta mediante Invoke para garantir thread-safety.
+        /// </summary>
+        private void Manager_PesoActualizado(int direccion, double pesoCalibrado)
         {
+            this.Invoke(new Action(() =>
+            {
+                if (direccion == celdaSeleccionada)
+                {
+                    lblPesoIndividual.Text = $"Celda #{direccion:D2}: {pesoCalibrado:F2} kg";
+                }
 
+                double pesoUnificado = manager.ObtenerPesoUnificado();
+                txtBalanza.Text = pesoUnificado.ToString("F2");
+                ultimoPesoCalibrado = pesoUnificado;
+                lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
+                lblCeldaActiva.Text = $"Celda activa: #{celdaSeleccionada:D2}";
+            }));
         }
 
-        private void toolStripLabel1_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Maneja el evento de enumeración de celdas completada.
+        /// Actualiza el ListBox de celdas y el indicador de estado
+        /// con la cantidad de celdas detectadas.
+        /// </summary>
+        private void Manager_CeldasEnumeradas(List<CeldaInfo> celdas)
         {
-
+            this.Invoke(new Action(() =>
+            {
+                lstCeldas.Items.Clear();
+                foreach (var c in celdas)
+                {
+                    lstCeldas.Items.Add(c.ToString());
+                }
+                if (celdas.Count > 0)
+                {
+                    tsslblStatusConexion.Text = $"{celdas.Count} celda(s)";
+                }
+            }));
         }
 
-        private void toolStripDropDownButton1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
+        /// <summary>
+        /// Maneja el click del botón INGRESAR del menú LOGIN.
+        /// Verifica las credenciales contra la tabla 'usuario' de la base de datos MySQL.
+        /// Si el login es exitoso, muestra los menús de configuración.
+        /// </summary>
         private void tsmiIngresar_Click(object sender, EventArgs e)
         {
-            try {
-                // Varibles
+            try
+            {
                 string usuario = txtUsuario.Text.Trim();
-                string contrasena= txtContrasena.Text.Trim();
+                string contrasena = txtContrasena.Text.Trim();
 
                 if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(contrasena))
                 {
@@ -114,9 +280,14 @@ namespace FormulaGaussExample
                     return;
                 }
 
-                ConectionBD conexion = new ConectionBD(ConfigManager.CargarConfig());
-                conexion.AbrirConexion();
+                // Verificar que haya conexión a la base de datos
+                if (conexion == null)
+                {
+                    MessageBox.Show("No hay conexión a la base de datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
+                // Consultar usuario en la base de datos
                 string query = "SELECT * FROM usuario WHERE nombre=@usuario AND contrasena=@contrasena";
 
                 var parametros = new Dictionary<string, object>
@@ -125,7 +296,7 @@ namespace FormulaGaussExample
                     {"@contrasena", contrasena}
                 };
 
-                using(var reader = conexion.EjecutarConsulta(query,parametros))
+                using (var reader = conexion.EjecutarConsulta(query, parametros))
                 {
                     if (reader.Read())
                     {
@@ -138,137 +309,391 @@ namespace FormulaGaussExample
                         MessageBox.Show("Credenciales incorrectas\nIntente nuevamente", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                conexion.CerrarConexion();
-
-            } catch(Exception ex) {
-                MessageBox.Show("Error al ingresar:"+ex.Message,"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al ingresar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
+        /// <summary>
+        /// Guarda el puerto COM seleccionado en la tabla 'balanza' de la base de datos.
+        /// </summary>
         private void tsmiGuardarMenu_Click(object sender, EventArgs e)
         {
             try
             {
-                string conexionBalanza = tscbBalanza.Text;
+                // Validar que se haya seleccionado un puerto COM
+                string balanzaCOM = tscbBalanza.Text;
+                if (string.IsNullOrEmpty(balanzaCOM))
+                {
+                    MessageBox.Show("Seleccione un puerto COM", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (conexion == null)
+                {
+                    MessageBox.Show("No hay conexión a la base de datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
                 var parametros = new Dictionary<string, object>
                 {
-                    {"@COM", conexionBalanza }
+                    {"@COM", balanzaCOM }
                 };
 
                 string query = "INSERT INTO balanza (COM) VALUES(@COM)";
                 int filas = conexion.EjecutarNonQuery(query, parametros);
-                    if (filas>0)
-                    {
-                        MessageBox.Show("Configuración guardada correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Error al guardar configuración", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-
-            }catch(Exception ex)
+                if (filas > 0)
+                {
+                    MessageBox.Show("Configuración guardada correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Error al guardar configuración", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar:"+ex.Message,"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al guardar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void tsmiAbrirBalanza_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Abre la conexión con la balanza en el puerto COM seleccionado.
+        /// Luego enumera las celdas conectadas en segundo plano (Task.Run)
+        /// para no bloquear la interfaz de usuario durante el escaneo.
+        /// </summary>
+        private async void tsmiAbrirBalanza_Click(object sender, EventArgs e)
         {
             var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
-            menu.AutoClose = false; // evita que se cierre
+            menu.AutoClose = false;
 
             string puertoBalanza = tscbBalanza.Text;
             if (string.IsNullOrEmpty(puertoBalanza))
             {
                 MessageBox.Show("Seleccione un puerto COM para la balanza", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                menu.AutoClose = true; // vuelve al comportamiento normal
+                menu.AutoClose = true;
                 return;
             }
 
-            tscbBalanza.Enabled = false; // bloquea el cambio de ítem
-            MessageBox.Show($"Balanza conectada al puerto {puertoBalanza}", "Conexión exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                manager.Conectar(puertoBalanza);
 
-            menu.AutoClose = true; // vuelve al comportamiento normal
+                if (manager.IsOpen)
+                {
+                    tscbBalanza.Enabled = false;
+                    balanzaConectada = true;
+                    tiempoInicioConexion = DateTime.Now;
+                    btnRegistrar.Enabled = true;
 
-            // Actualiza estado de conexión
-            balanzaConectada = true;
-            tiempoInicioConexion = DateTime.Now;
+                    // Enumerar celdas en segundo plano para no congelar la UI
+                    // (~4.5 segundos de escaneo de direcciones 1-15)
+                    List<CeldaInfo> celdas = await Task.Run(() => manager.EnumerarCeldas());
+
+                    if (celdas.Count > 0)
+                    {
+                        MessageBox.Show($"Balanza conectada en {puertoBalanza}\n{celdas.Count} celda(s) detectada(s)",
+                            "Conexión exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Balanza conectada en {puertoBalanza}\nNo se detectaron celdas",
+                            "Conexión exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+
+                    // Iniciar timer de pesaje periódico
+                    TimerPesaje.Start();
+
+                    // Iniciar timer de monitoreo de tramas
+                    timerDataTrama.Start();
+
+                    // Cargar factores de calibración guardados
+                    CargarFactoresCalibracion();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al conectar: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            menu.AutoClose = true;
         }
 
+        /// <summary>
+        /// Carga los factores de calibración desde el archivo de configuración
+        /// hacia el manager para que se apliquen a las lecturas de peso.
+        /// </summary>
+        private void CargarFactoresCalibracion()
+        {
+            if (config.FactoresCalibracion != null)
+            {
+                foreach (var factor in config.FactoresCalibracion)
+                {
+                    if (factor.Key.StartsWith("CELDA_") && int.TryParse(factor.Key.Substring(6), out int direccion))
+                    {
+                        manager.SetFactorCalibracion(direccion, factor.Value);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Cierra la conexión con la balanza, detiene los timers de pesaje
+        /// y monitoreo, y restaura la interfaz al estado inicial de desconexión.
+        /// </summary>
         private void tsmiCerrarBalanza_Click(object sender, EventArgs e)
         {
             var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
             menu.AutoClose = false;
 
-            tscbBalanza.Enabled = true; // desbloquea el ítem
+            // Detener timers
+            TimerPesaje.Stop();
+            timerDataTrama.Stop();
+
+            // Desconectar el puerto serial
+            manager.Desconectar();
+
+            // Restaurar controles de la UI
+            tscbBalanza.Enabled = true;
+            balanzaConectada = false;
+            tiempoInicioDesconexion = DateTime.Now;
+            btnRegistrar.Enabled = false;
+            txtBalanza.Clear();
+            lblCeldaActiva.Text = "Celda #--";
+            lstCeldas.Items.Clear();
+            lblPesoUnificado.Text = "Peso Total: 0.00 kg";
+            lblPesoIndividual.Text = "Celda #--: 0.00 kg";
+
             MessageBox.Show("Balanza desconectada correctamente.", "Desconexión", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             menu.AutoClose = true;
-
-            // Actualiza estado de conexión
-            balanzaConectada = false;
-            tiempoInicioDesconexion = DateTime.Now;
         }
 
+        /// <summary>
+        /// Calibra todas las celdas conectadas usando un peso conocido.
+        /// Calcula los factores de calibración en el manager y los guarda
+        /// en el archivo de configuración para uso futuro.
+        /// </summary>
         private void tsmiGuardarConfiguracion_Click(object sender, EventArgs e)
         {
             try
             {
-                string calibracion = tsmiCalibraciónBalanza.Text.Trim();
-
-                if (string.IsNullOrEmpty(calibracion))
+                // Validar el peso conocido ingresado
+                if (!double.TryParse(tstbCalibracion.Text.Trim(), out double pesoConocido) || pesoConocido <= 0)
                 {
-                    MessageBox.Show("Ingrese un valor para calibrar\nla balanza", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Ingrese un peso conocido válido para calibrar el sistema", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                ConectionBD conexion = new ConectionBD(ConfigManager.CargarConfig());
-                conexion.AbrirConexion();
-
-                var parametro = new Dictionary<string, object>
-            {
-                {"@calibracion", calibracion }
-            };
-
-                string query = "INSERT INTO balanza (COM) VALUES (@calibracion)";
-                using (var reader = conexion.EjecutarConsulta(query, parametro))
+                // Verificar que haya celdas conectadas
+                if (manager.Celdas.Count == 0)
                 {
-                    if (reader.Read())
-                    {
-                        MessageBox.Show("Calibración guardada correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Error al guardar calibración", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    MessageBox.Show("No hay celdas conectadas para calibrar", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
-                conexion.CerrarConexion();
+
+                // Calibrar todas las celdas con el peso conocido
+                var factores = manager.CalibrarSistema(pesoConocido);
+
+                if (factores.Count > 0)
+                {
+                    // Guardar factores en la configuración
+                    if (config.FactoresCalibracion == null)
+                        config.FactoresCalibracion = new Dictionary<string, double>();
+
+                    foreach (var factor in factores)
+                    {
+                        config.FactoresCalibracion[$"CELDA_{factor.Key:D2}"] = factor.Value;
+                    }
+
+                    ConfigManager.GuardarConfig(config);
+
+                    MessageBox.Show($"Calibración del sistema completada\n" +
+                                   $"Peso conocido: {pesoConocido:F2} kg\n" +
+                                   $"Celdas calibradas: {factores.Count}",
+                                   "Calibración exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    ActualizarListaCeldas();
+                }
+                else
+                {
+                    MessageBox.Show("No se pudo calibrar. Verifique que todas las celdas estén respondiendo.",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar calibración:" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error al calibrar sistema: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        //Función para Cragar puertos COM disponibles en el sistema y mostrarlos en el ComboBox de la interfaz
+        /// <summary>
+        /// Consulta los pesos de todas las celdas conectadas (1 a 15)
+        /// y actualiza la UI con el peso unificado.
+        /// Método utilitario para depuración y consultas manuales.
+        /// </summary>
+        private void ConsultarTodasCeldas()
+        {
+            if (manager != null && manager.IsOpen)
+            {
+                for (int i = 1; i <= 15; i++)
+                {
+                    if (manager.VerificarComunicacion(i))
+                    {
+                        double peso = manager.ConsultarPeso(i);
+                        System.Diagnostics.Debug.WriteLine($"Celda #{i:D2}: {peso:F2} kg");
+                    }
+                }
+
+                double pesoUnificado = manager.ObtenerPesoUnificado();
+                txtBalanza.Text = pesoUnificado.ToString("F2");
+                lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
+            }
+        }
+
+        /// <summary>
+        /// Actualiza el ListBox de celdas con las celdas conectadas actualmente.
+        /// </summary>
+        private void ActualizarListaCeldas()
+        {
+            lstCeldas.Items.Clear();
+            foreach (var celda in manager.Celdas.Values)
+            {
+                if (celda.Connected)
+                {
+                    lstCeldas.Items.Add(celda.ToString());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Timer principal de pesaje que se ejecuta cada 1 segundo mientras
+        /// la balanza está conectada. Actualiza el peso unificado (suma total)
+        /// y el peso individual de la celda seleccionada.
+        /// </summary>
+        private void TimerPesaje_Tick(object sender, EventArgs e)
+        {
+            if (manager != null && manager.IsOpen)
+            {
+                // Actualizar peso unificado
+                double pesoUnificado = manager.ObtenerPesoUnificado();
+                txtBalanza.Text = pesoUnificado.ToString("F2");
+                ultimoPesoCalibrado = pesoUnificado;
+                lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
+
+                // Consultar peso individual de la celda seleccionada
+                if (celdaSeleccionada >= 1 && celdaSeleccionada <= 15)
+                {
+                    double pesoIndividual = manager.ConsultarPeso(celdaSeleccionada);
+                    lblPesoIndividual.Text = $"Celda #{celdaSeleccionada:D2}: {pesoIndividual:F2} kg";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Registra el peso actual en la base de datos MySQL.
+        /// Primero intenta insertar incluyendo el ID de la celda seleccionada.
+        /// Si la tabla no tiene la columna celda_id (versiones anteriores de la BD),
+        /// reintenta la inserción sin ese campo.
+        /// </summary>
+        private void btnRegistrar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double peso = ultimoPesoCalibrado;
+
+                // Si no hay peso calibrado, intentar obtenerlo del campo de texto
+                if (peso <= 0 && !double.TryParse(txtBalanza.Text.Trim(), out peso))
+                {
+                    MessageBox.Show("No hay un peso válido para registrar", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (conexion == null)
+                {
+                    MessageBox.Show("No hay conexión a la base de datos.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Intentar insertar con el ID de celda
+                var parametrosCompletos = new Dictionary<string, object>
+                {
+                    {"@peso", peso},
+                    {"@fecha", DateTime.Now},
+                    {"@celda", celdaSeleccionada}
+                };
+
+                string queryCompleta = "INSERT INTO peso (peso, fecha, celda_id) VALUES(@peso, @fecha, @celda)";
+
+                try
+                {
+                    int filas = conexion.EjecutarNonQuery(queryCompleta, parametrosCompletos);
+                    if (filas > 0)
+                    {
+                        MessageBox.Show($"Peso registrado: {peso:F2} kg (Celda #{celdaSeleccionada:D2})",
+                            "Registro exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Si la tabla no tiene la columna celda_id (BD antigua),
+                    // reintentar la inserción solo con peso y fecha
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Error al insertar con celda_id, reintentando sin ella: {ex.Message}");
+
+                    var parametrosSimples = new Dictionary<string, object>
+                    {
+                        {"@peso", peso},
+                        {"@fecha", DateTime.Now}
+                    };
+
+                    string querySimples = "INSERT INTO peso (peso, fecha) VALUES(@peso, @fecha)";
+                    int filas = conexion.EjecutarNonQuery(querySimples, parametrosSimples);
+
+                    if (filas > 0)
+                    {
+                        MessageBox.Show($"Peso registrado: {peso:F2} kg",
+                            "Registro exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al registrar peso: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene la lista de puertos COM disponibles en el sistema
+        /// y los carga en el combobox de selección de puerto.
+        /// </summary>
         private void CargarPuertosCOM()
         {
             string[] puertos = SerialPort.GetPortNames();
-
             tscbBalanza.Items.Clear();
-
             foreach (string puerto in puertos)
             {
                 tscbBalanza.Items.Add(puerto);
             }
-
             if (tscbBalanza.Items.Count > 0)
             {
                 tscbBalanza.SelectedIndex = 0;
             }
         }
 
+        /// <summary>
+        /// Timer que actualiza el indicador de estado de conexión
+        /// y el tiempo transcurrido en la barra de estado.
+        /// Se ejecuta cada 1 segundo.
+        /// </summary>
         private void tsslblTiempoConexion_Tick(object sender, EventArgs e)
         {
             TimeSpan tiempo;
@@ -291,20 +716,50 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>
+        /// Timer que monitorea la recepción de tramas del puerto serial.
+        /// Si no se recibe una trama dentro del intervalo (1s), muestra
+        /// "Sin Trama" en rojo. La bandera ultimaTramaRecibida es reseteada
+        /// por Manager_TramaRecibida cada vez que llega una trama válida.
+        /// </summary>
         private void timerDataTrama_Tick(object sender, EventArgs e)
         {
             if (ultimaTramaRecibida)
             {
-                tsslblTrama.Text = "Sin Trama";
-                tsslblTrama.ForeColor = Color.Red;
+                tsslblTrama.Text = "Trama OK";
+                tsslblTrama.ForeColor = Color.Green;
             }
             else
             {
-                tsslblTrama.Text = "Recepción de Trama";
-                tsslblTrama.ForeColor = Color.Green;
+                tsslblTrama.Text = "Sin Trama";
+                tsslblTrama.ForeColor = Color.Red;
             }
-            // Reinicia el estado para la siguiente verificación
             ultimaTramaRecibida = false;
         }
+
+        /// <summary>
+        /// Maneja el cambio de selección en el combobox de direcciones esclavo.
+        /// Actualiza la celda activa y consulta su peso si la balanza está conectada.
+        /// </summary>
+        private void tscbSlave_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (int.TryParse(tscbSlave.Text, out int slave))
+            {
+                celdaSeleccionada = slave;
+                lblCeldaActiva.Text = $"Celda activa: #{slave:D2}";
+
+                if (manager != null && manager.IsOpen)
+                {
+                    double peso = manager.ConsultarPeso(slave);
+                    lblPesoIndividual.Text = $"Celda #{slave:D2}: {peso:F2} kg";
+                }
+            }
+        }
+
+        // --- Event handlers requeridos por el diseñador (aunque estén vacíos) ---
+
+        private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e) { }
+        private void toolStripDropDownButton1_Click(object sender, EventArgs e) { }
+        private void label1_Click(object sender, EventArgs e) { }
     }
 }
