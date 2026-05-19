@@ -41,6 +41,9 @@ namespace FormulaGaussExample
         // Indica si se recibió al menos una trama válida en el último intervalo
         private bool ultimaTramaRecibida = false;
 
+        // Motor de calibración lineal multivariable
+        private CalibracionLineal calibracionLineal;
+
         // Labels creados programáticamente para mostrar pesos (no existen en el diseñador)
         private Label lblPesoUnificado;
         private Label lblPesoIndividual;
@@ -170,11 +173,13 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Carga los factores de calibración guardados en la configuración
-        /// hacia el manager de celdas para aplicarlos a las lecturas.
+        /// Carga los factores de calibración (modo simple) guardados en la configuración
+        /// hacia el manager de celdas.
+        /// Si existe calibración multivariable activa, carga los coeficientes m1..m4, B.
         /// </summary>
         private void CargarCeldasConfig()
         {
+            // Cargar factores de calibración simple (per-cell factors)
             if (config.FactoresCalibracion == null)
                 config.FactoresCalibracion = new Dictionary<string, double>();
 
@@ -187,6 +192,33 @@ namespace FormulaGaussExample
                         manager.SetFactorCalibracion(direccion, factor.Value);
                     }
                 }
+            }
+
+            // Cargar calibración multivariable si está activa en la configuración
+            if (config.CalibracionMultivariableActiva &&
+                config.CoeficienteM1 != 0 && config.CoeficienteM2 != 0 &&
+                config.CoeficienteM3 != 0 && config.CoeficienteM4 != 0)
+            {
+                calibracionLineal = new CalibracionLineal(
+                    config.CoeficienteM1,
+                    config.CoeficienteM2,
+                    config.CoeficienteM3,
+                    config.CoeficienteM4,
+                    config.BiasB
+                );
+
+                if (manager != null)
+                {
+                    manager.ConfigurarCalibracionMultivariable(
+                        config.CoeficienteM1,
+                        config.CoeficienteM2,
+                        config.CoeficienteM3,
+                        config.CoeficienteM4,
+                        config.BiasB
+                    );
+                }
+
+                Console.WriteLine("Calibración multivariable cargada desde configuración.");
             }
         }
 
@@ -422,11 +454,13 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Carga los factores de calibración desde el archivo de configuración
-        /// hacia el manager para que se apliquen a las lecturas de peso.
+        /// Carga los factores de calibración (modo simple y multivariable)
+        /// desde el archivo de configuración hacia el manager.
+        /// Se ejecuta al conectar la balanza.
         /// </summary>
         private void CargarFactoresCalibracion()
         {
+            // Cargar factores de calibración simple
             if (config.FactoresCalibracion != null)
             {
                 foreach (var factor in config.FactoresCalibracion)
@@ -436,6 +470,22 @@ namespace FormulaGaussExample
                         manager.SetFactorCalibracion(direccion, factor.Value);
                     }
                 }
+            }
+
+            // Cargar calibración multivariable si está activa
+            if (config.CalibracionMultivariableActiva &&
+                config.CoeficienteM1 != 0 && config.CoeficienteM2 != 0 &&
+                config.CoeficienteM3 != 0 && config.CoeficienteM4 != 0)
+            {
+                manager.ConfigurarCalibracionMultivariable(
+                    config.CoeficienteM1,
+                    config.CoeficienteM2,
+                    config.CoeficienteM3,
+                    config.CoeficienteM4,
+                    config.BiasB
+                );
+
+                Console.WriteLine("Calibración multivariable cargada al manager.");
             }
         }
 
@@ -472,9 +522,13 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Calibra todas las celdas conectadas usando un peso conocido.
-        /// Calcula los factores de calibración en el manager y los guarda
-        /// en el archivo de configuración para uso futuro.
+        /// Calibra el sistema usando el método multivariable.
+        /// Recopila lecturas raw de las 4 celdas con el peso conocido actual,
+        /// los acumula como puntos de calibración y, al llegar a 5 puntos,
+        /// resuelve el sistema de ecuaciones por eliminación de Gauss.
+        /// 
+        /// Guarda los coeficientes resultantes (m1..m4, B) en config.json
+        /// y activa el modo de calibración multivariable.
         /// </summary>
         private void tsmiGuardarConfiguracion_Click(object sender, EventArgs e)
         {
@@ -488,40 +542,114 @@ namespace FormulaGaussExample
                     return;
                 }
 
-                // Verificar que haya celdas conectadas
-                if (manager.Celdas.Count == 0)
+                // Verificar que haya al menos 4 celdas conectadas
+                if (manager.Celdas.Count < 4)
                 {
-                    MessageBox.Show("No hay celdas conectadas para calibrar", "Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (manager.Celdas.Count == 0)
+                    {
+                        MessageBox.Show("No hay celdas conectadas para calibrar.\nConecte la balanza primero.",
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // Permitir continuar con las celdas disponibles
+                    DialogResult dr = MessageBox.Show(
+                        $"Solo se detectaron {manager.Celdas.Count} celda(s).\n" +
+                        $"¿Desea calibrar con las celdas disponibles?",
+                        "Celdas insuficientes", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (dr == DialogResult.No)
+                        return;
+                }
+
+                // Crear o inicializar el recolector de puntos de calibración
+                if (calibracionLineal == null)
+                    calibracionLineal = new CalibracionLineal();
+
+                // Recolectar lecturas raw de las celdas 1 a 4
+                double x1 = manager.Celdas.ContainsKey(1) ? manager.Celdas[1].RawWeight : 0;
+                double x2 = manager.Celdas.ContainsKey(2) ? manager.Celdas[2].RawWeight : 0;
+                double x3 = manager.Celdas.ContainsKey(3) ? manager.Celdas[3].RawWeight : 0;
+                double x4 = manager.Celdas.ContainsKey(4) ? manager.Celdas[4].RawWeight : 0;
+
+                // Mostrar las lecturas actuales y confirmar
+                string mensajePunto =
+                    $"Punto de calibración #{PuntosCalibracion.Count + 1}:\n\n" +
+                    $"Peso conocido: {pesoConocido} kg\n" +
+                    $"Celda 1 (raw): {x1}\n" +
+                    $"Celda 2 (raw): {x2}\n" +
+                    $"Celda 3 (raw): {x3}\n" +
+                    $"Celda 4 (raw): {x4}\n\n" +
+                    $"¿Agregar este punto y continuar?";
+
+                DialogResult resultado = MessageBox.Show(mensajePunto, "Registrar punto de calibración",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (resultado == DialogResult.No)
+                    return;
+
+                // Guardar el punto de calibración
+                PuntosCalibracion.Add(new PuntoCalibracion
+                {
+                    X1 = x1,
+                    X2 = x2,
+                    X3 = x3,
+                    X4 = x4,
+                    PesoConocido = pesoConocido
+                });
+
+                int puntosRestantes = 5 - PuntosCalibracion.Count;
+
+                if (puntosRestantes > 0)
+                {
+                    MessageBox.Show(
+                        $"Punto registrado correctamente.\n\n" +
+                        $"Faltan {puntosRestantes} punto(s) para completar la calibración.\n" +
+                        $"Cambie el peso sobre la báscula y presione 'Guardar Configuración' nuevamente.",
+                        "Punto registrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
-                // Calibrar todas las celdas con el peso conocido
-                var factores = manager.CalibrarSistema(pesoConocido);
+                // Con 5 puntos, resolver el sistema por eliminación de Gauss
+                bool exito = calibracionLineal.Calibrar(PuntosCalibracion);
 
-                if (factores.Count > 0)
+                if (exito)
                 {
-                    // Guardar factores en la configuración
-                    if (config.FactoresCalibracion == null)
-                        config.FactoresCalibracion = new Dictionary<string, double>();
+                    // Guardar coeficientes en la configuración
+                    config.CoeficienteM1 = calibracionLineal.Coeficientes[0];
+                    config.CoeficienteM2 = calibracionLineal.Coeficientes[1];
+                    config.CoeficienteM3 = calibracionLineal.Coeficientes[2];
+                    config.CoeficienteM4 = calibracionLineal.Coeficientes[3];
+                    config.BiasB = calibracionLineal.Bias;
+                    config.CalibracionMultivariableActiva = true;
 
-                    foreach (var factor in factores)
-                    {
-                        config.FactoresCalibracion[$"CELDA_{factor.Key:D2}"] = factor.Value;
-                    }
+                    // Limpiar factores de calibración simple para evitar confusión
+                    config.FactoresCalibracion?.Clear();
 
                     ConfigManager.GuardarConfig(config);
 
-                    MessageBox.Show($"Calibración del sistema completada\n" +
-                                   $"Peso conocido: {pesoConocido:F2} kg\n" +
-                                   $"Celdas calibradas: {factores.Count}",
-                                   "Calibración exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // Aplicar al manager
+                    manager.ConfigurarCalibracionMultivariable(
+                        config.CoeficienteM1,
+                        config.CoeficienteM2,
+                        config.CoeficienteM3,
+                        config.CoeficienteM4,
+                        config.BiasB
+                    );
+
+                    // Mostrar informe completo de calibración
+                    string informe = calibracionLineal.GenerarInforme(PuntosCalibracion);
+                    MessageBox.Show(informe, "Calibración multivariable exitosa",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Limpiar puntos para futuras recalibraciones
+                    PuntosCalibracion.Clear();
 
                     ActualizarListaCeldas();
                 }
                 else
                 {
-                    MessageBox.Show("No se pudo calibrar. Verifique que todas las celdas estén respondiendo.",
+                    MessageBox.Show("No se pudo calibrar. Verifique los puntos de calibración.",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
@@ -531,6 +659,9 @@ namespace FormulaGaussExample
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        // Lista estática para acumular puntos de calibración durante la sesión
+        private List<PuntoCalibracion> PuntosCalibracion = new List<PuntoCalibracion>();
 
         /// <summary>
         /// Consulta los pesos de todas las celdas conectadas (1 a 15)

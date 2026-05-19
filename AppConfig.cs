@@ -32,9 +32,29 @@ namespace FormulaGaussExample
         public string CalibracionBalanza { get; set; }
 
         /// <summary>
-        /// Diccionario de factores de calibración por celda.
+        /// Diccionario de factores de calibración por celda (método simple).
         /// Key con formato "CELDA_XX" (ej: CELDA_01), Value: factor de calibración.
         /// </summary>
         public Dictionary<string, double> FactoresCalibracion { get; set; }
+
+        // --- Coeficientes de calibración multivariable ---
+
+        /// <summary>Coeficiente m1 de la celda 1 (calibración multivariable).</summary>
+        public double CoeficienteM1 { get; set; }
+
+        /// <summary>Coeficiente m2 de la celda 2 (calibración multivariable).</summary>
+        public double CoeficienteM2 { get; set; }
+
+        /// <summary>Coeficiente m3 de la celda 3 (calibración multivariable).</summary>
+        public double CoeficienteM3 { get; set; }
+
+        /// <summary>Coeficiente m4 de la celda 4 (calibración multivariable).</summary>
+        public double CoeficienteM4 { get; set; }
+
+        /// <summary>Bias (offset) B del sistema (calibración multivariable).</summary>
+        public double BiasB { get; set; }
+
+        /// <summary>Indica si la calibración multivariable está activa.</summary>
+        public bool CalibracionMultivariableActiva { get; set; }
     }
 }

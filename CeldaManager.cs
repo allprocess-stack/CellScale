@@ -16,14 +16,32 @@ namespace FormulaGaussExample
     /// - Respuesta: valor numérico o cadena de identificación
     /// 
     /// Las direcciones válidas son 1-15 (la dirección 0 no se usa, la 98 es especial para asignación).
+    /// 
+    /// Soporta dos modos de calibración:
+    /// - Simple: factor único por celda (peso = raw * factor)
+    /// - Multivariable: modelo lineal PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
     /// </summary>
     internal class CeldaManager
     {
         // Puerto serial para comunicación con las celdas
         private SerialPort puerto;
 
-        // Diccionario de factores de calibración por dirección de celda
+        // Diccionario de factores de calibración por dirección de celda (modo simple)
         private Dictionary<int, double> factoresCalibracion = new Dictionary<int, double>();
+
+        // Motor de calibración multivariable (modo avanzado)
+        private CalibracionLineal calibracionMultivariable;
+
+        /// <summary>
+        /// Obtiene el motor de calibración multivariable activo.
+        /// </summary>
+        public CalibracionLineal CalibracionMultivariable => calibracionMultivariable;
+
+        /// <summary>
+        /// Indica qué modo de calibración está activo.
+        /// true = multivariable (m1..m4, B), false = simple (factor por celda).
+        /// </summary>
+        public bool UsarCalibracionMultivariable { get; set; } = false;
 
         /// <summary>
         /// Diccionario de celdas detectadas en el bus, indexadas por dirección esclavo.
@@ -57,6 +75,30 @@ namespace FormulaGaussExample
         /// Indica si el puerto serial está actualmente abierto y operativo.
         /// </summary>
         public bool IsOpen => puerto != null && puerto.IsOpen;
+
+        /// <summary>
+        /// Configura el motor de calibración multivariable con los coeficientes resueltos.
+        /// Activa el modo de calibración multivariable automáticamente.
+        /// </summary>
+        /// <param name="m1">Coeficiente de celda 1.</param>
+        /// <param name="m2">Coeficiente de celda 2.</param>
+        /// <param name="m3">Coeficiente de celda 3.</param>
+        /// <param name="m4">Coeficiente de celda 4.</param>
+        /// <param name="b">Bias del sistema.</param>
+        public void ConfigurarCalibracionMultivariable(double m1, double m2, double m3, double m4, double b)
+        {
+            calibracionMultivariable = new CalibracionLineal(m1, m2, m3, m4, b);
+            UsarCalibracionMultivariable = true;
+        }
+
+        /// <summary>
+        /// Desactiva la calibración multivariable y vuelve al modo simple.
+        /// </summary>
+        public void DesactivarCalibracionMultivariable()
+        {
+            calibracionMultivariable = null;
+            UsarCalibracionMultivariable = false;
+        }
 
         /// <summary>
         /// Conecta al puerto serial de la balanza con configuración predeterminada:
@@ -239,10 +281,12 @@ namespace FormulaGaussExample
         /// Consulta el peso actual de una celda específica.
         /// Comando enviado: S{dir:D2};MSV?;\
         /// Respuesta esperada: valor numérico del peso en unidades internas.
-        /// El peso raw se multiplica por el factor de calibración para obtener el peso calibrado.
+        /// 
+        /// En modo simple: retorna raw * factor de calibración.
+        /// En modo multivariable: retorna el valor raw (el peso total se calcula con CalcularPesoMultivariable).
         /// </summary>
         /// <param name="direccion">Dirección de la celda (1-15).</param>
-        /// <returns>Peso calibrado de la celda en kg.</returns>
+        /// <returns>Peso calibrado de la celda en kg (modo simple) o valor raw (modo multivariable).</returns>
         public double ConsultarPeso(int direccion)
         {
             string respuesta = EnviarComando(direccion, "MSV?");
@@ -253,13 +297,51 @@ namespace FormulaGaussExample
                 Celdas[direccion] = new CeldaInfo { SlaveNumber = direccion };
 
             Celdas[direccion].RawWeight = rawWeight;
-            Celdas[direccion].CalibratedWeight = rawWeight * GetFactorCalibracion(direccion);
             Celdas[direccion].LastRead = DateTime.Now;
             Celdas[direccion].Connected = true;
+
+            // En modo multivariable, el peso individual es el raw (sin calibrar)
+            // El peso total se calcula con la fórmula PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
+            if (UsarCalibracionMultivariable && calibracionMultivariable != null)
+            {
+                Celdas[direccion].CalibratedWeight = rawWeight;
+            }
+            else
+            {
+                // Modo simple: aplicar factor de calibración individual
+                Celdas[direccion].CalibratedWeight = rawWeight * GetFactorCalibracion(direccion);
+            }
 
             PesoActualizado?.Invoke(direccion, Celdas[direccion].CalibratedWeight);
 
             return Celdas[direccion].CalibratedWeight;
+        }
+
+        /// <summary>
+        /// Calcula el peso total del sistema usando el modelo multivariable.
+        /// PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
+        /// 
+        /// Las lecturas raw se toman de las celdas en las direcciones 1, 2, 3, 4.
+        /// </summary>
+        /// <returns>Peso total calculado con el modelo multivariable, o 0 si no está calibrado.</returns>
+        public double CalcularPesoMultivariable()
+        {
+            if (!UsarCalibracionMultivariable || calibracionMultivariable == null || !calibracionMultivariable.EstaCalibrado)
+                return 0;
+
+            try
+            {
+                double x1 = Celdas.ContainsKey(1) ? Celdas[1].RawWeight : 0;
+                double x2 = Celdas.ContainsKey(2) ? Celdas[2].RawWeight : 0;
+                double x3 = Celdas.ContainsKey(3) ? Celdas[3].RawWeight : 0;
+                double x4 = Celdas.ContainsKey(4) ? Celdas[4].RawWeight : 0;
+
+                return calibracionMultivariable.PesoCalculado(x1, x2, x3, x4);
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         /// <summary>
@@ -365,11 +447,23 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Obtiene el peso unificado (suma total) de todas las celdas conectadas.
+        /// Obtiene el peso total del sistema.
+        /// 
+        /// En modo multivariable: aplica la fórmula PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
+        /// usando las lecturas raw de las 4 celdas.
+        /// 
+        /// En modo simple: suma los pesos calibrados de todas las celdas conectadas.
         /// </summary>
-        /// <returns>Suma de los pesos calibrados de todas las celdas con Connected = true.</returns>
+        /// <returns>Peso total del sistema en kg.</returns>
         public double ObtenerPesoUnificado()
         {
+            // Usar modelo multivariable si está activo
+            if (UsarCalibracionMultivariable && calibracionMultivariable != null && calibracionMultivariable.EstaCalibrado)
+            {
+                return CalcularPesoMultivariable();
+            }
+
+            // Modo simple: sumar pesos calibrados individuales
             double pesoTotal = 0;
 
             foreach (var celda in Celdas.Values)
