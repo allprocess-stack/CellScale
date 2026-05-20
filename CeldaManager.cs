@@ -21,7 +21,9 @@ namespace FormulaGaussExample
     /// - Simple: factor único por celda (peso = raw * factor)
     /// - Multivariable: modelo lineal PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
     /// </summary>
-    internal class CeldaManager
+    // MODIFICADO: cambiado de internal a public para que ViewCeldas (público)
+    //             pueda recibir el manager en su constructor.
+    public class CeldaManager
     {
         // Puerto serial para comunicación con las celdas
         private SerialPort puerto;
@@ -137,6 +139,10 @@ namespace FormulaGaussExample
                     puerto = null;
                     TramaRecibida?.Invoke("Desconectado");
                 }
+
+                // Limpiar el diccionario de celdas para evitar datos fantasma
+                // en reconexiones posteriores.
+                Celdas.Clear();
             }
             catch (Exception ex)
             {
@@ -292,29 +298,40 @@ namespace FormulaGaussExample
             string respuesta = EnviarComando(direccion, "MSV?");
             double rawWeight = ExtraerValorNumerico(respuesta);
 
-            // Crear entrada para la celda si no existe
-            if (!Celdas.ContainsKey(direccion))
-                Celdas[direccion] = new CeldaInfo { SlaveNumber = direccion };
+            // Solo actualizar la celda si la respuesta es válida (tiene un número)
+            bool respuestaValida = !string.IsNullOrEmpty(respuesta)
+                                   && !respuesta.StartsWith("ERROR")
+                                   && !respuesta.StartsWith("?")
+                                   && respuesta.Length > 0;
 
-            Celdas[direccion].RawWeight = rawWeight;
-            Celdas[direccion].LastRead = DateTime.Now;
-            Celdas[direccion].Connected = true;
-
-            // En modo multivariable, el peso individual es el raw (sin calibrar)
-            // El peso total se calcula con la fórmula PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
-            if (UsarCalibracionMultivariable && calibracionMultivariable != null)
+            if (respuestaValida)
             {
-                Celdas[direccion].CalibratedWeight = rawWeight;
-            }
-            else
-            {
-                // Modo simple: aplicar factor de calibración individual
-                Celdas[direccion].CalibratedWeight = rawWeight * GetFactorCalibracion(direccion);
+                // Crear entrada para la celda si no existe
+                if (!Celdas.ContainsKey(direccion))
+                    Celdas[direccion] = new CeldaInfo { SlaveNumber = direccion };
+
+                Celdas[direccion].RawWeight = rawWeight;
+                Celdas[direccion].LastRead = DateTime.Now;
+                Celdas[direccion].Connected = true;
+
+                // En modo multivariable, el peso individual es el raw (sin calibrar)
+                // El peso total se calcula con la fórmula PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
+                if (UsarCalibracionMultivariable && calibracionMultivariable != null)
+                {
+                    Celdas[direccion].CalibratedWeight = rawWeight;
+                }
+                else
+                {
+                    // Modo simple: aplicar factor de calibración individual
+                    Celdas[direccion].CalibratedWeight = rawWeight * GetFactorCalibracion(direccion);
+                }
+
+                PesoActualizado?.Invoke(direccion, Celdas[direccion].CalibratedWeight);
+
+                return Celdas[direccion].CalibratedWeight;
             }
 
-            PesoActualizado?.Invoke(direccion, Celdas[direccion].CalibratedWeight);
-
-            return Celdas[direccion].CalibratedWeight;
+            return 0;
         }
 
         /// <summary>
@@ -421,10 +438,14 @@ namespace FormulaGaussExample
             {
                 string respuesta = ConsultarSerie(addr);
 
-                // Verificar si hay una celda válida en esta dirección
+                // Verificar si hay una celda válida en esta dirección.
+                // Una respuesta real de IDN? tiene formato "HBM,C16iC3/40t,Mxxxxx,Pxx"
+                // (contiene comas y NO contiene el comando "IDN?" como eco).
+                // Se rechazan: vacíos, errores, ecos del comando, respuestas muy cortas.
                 if (!string.IsNullOrEmpty(respuesta) &&
                     !respuesta.StartsWith("ERROR") &&
                     !respuesta.StartsWith("?") &&
+                    !respuesta.Contains("IDN?") &&
                     respuesta.Length > 3)
                 {
                     if (!Celdas.ContainsKey(addr))

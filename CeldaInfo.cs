@@ -7,7 +7,8 @@ namespace FormulaGaussExample
     /// Almacena la información de identificación, estado y peso de cada celda
     /// detectada en el bus RS-485.
     /// </summary>
-    internal class CeldaInfo
+    // MODIFICADO: cambiado a public para coincidir con CeldaManager (ahora public)
+    public class CeldaInfo
     {
         /// <summary>
         /// Dirección esclavo (1-15) asignada a la celda en el bus RS-485.

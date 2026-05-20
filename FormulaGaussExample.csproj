@@ -62,16 +62,34 @@
     <Compile Include="ConfigManager.cs" />
     <Compile Include="AppConfig.cs" />
     <Compile Include="CalibracionLineal.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="ViewBd.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="ViewBd.Designer.cs">
+      <DependentUpon>ViewBd.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ViewCeldas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ViewCeldas.Designer.cs">
+      <DependentUpon>ViewCeldas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ViewMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ViewMain.Designer.cs">
+      <DependentUpon>ViewMain.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="ViewBd.resx">
+      <DependentUpon>ViewBd.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ViewCeldas.resx">
+      <DependentUpon>ViewCeldas.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ViewMain.resx">
+      <DependentUpon>ViewMain.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

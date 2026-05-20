@@ -8,7 +8,8 @@ namespace FormulaGaussExample
     /// Representa un punto de calibración: las lecturas raw de las 4 celdas
     /// y el peso conocido colocado en la báscula.
     /// </summary>
-    internal class PuntoCalibracion
+    // MODIFICADO: cambiado a public para coincidir con CeldaManager (ahora public)
+    public class PuntoCalibracion
     {
         /// <summary>Lectura raw de la celda 1.</summary>
         public double X1 { get; set; }
@@ -38,7 +39,8 @@ namespace FormulaGaussExample
     /// Los coeficientes m1..m4 representan la contribución de cada celda al peso total,
     /// y B es el bias (offset) del sistema.
     /// </summary>
-    internal class CalibracionLineal
+    // MODIFICADO: cambiado a public para coincidir con CeldaManager (ahora public)
+    public class CalibracionLineal
     {
         /// <summary>Coeficientes de calibración para cada celda (m1, m2, m3, m4).</summary>
         public double[] Coeficientes { get; private set; }
