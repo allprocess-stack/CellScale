@@ -28,22 +28,6 @@ namespace FormulaGaussExample
         // Ruta completa del archivo config.json
         private string rutaConfig;
 
-        //// --------------------- CONTROLES CREADOS EN CÓDIGO ---------------------
-        //private Label lblServidor;
-        //private TextBox txtServidor;
-        //private Label lblBd;
-        //private TextBox txtBd;
-        //private Label lblPuerto;
-        //private TextBox txtPuerto;
-        //private Label lblUsuario;
-        //private TextBox txtUsuario;
-        //private Label lblContrasena;
-        //private TextBox txtContrasena;
-        //private Label lblRuta;
-        //private TextBox txtRuta;
-        //private Button btnGuardarBd;
-        //private Button btnProbarConexion;
-
         // Constructor: crea los controles y carga la configuración
         public ViewBd()
         {

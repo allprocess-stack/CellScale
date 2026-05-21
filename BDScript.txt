@@ -2,33 +2,24 @@
 use bdCellScale;
 
 create table usuario(
-id int primary key auto_increment,
-nombre varchar(100),
-contrasena varchar(100)
-);
-
-create table peso(
-id int primary key auto_increment,
-peso varchar(100),
-fecha datetime,
-celda_id int
+  id int primary key auto_increment,
+  nombre varchar(100),
+  contrasena varchar(100)
 );
 
 create table configuracion(
-id int primary key auto_increment,
-calibracion varchar(100) 
+  id int primary key auto_increment,
+  calibracion varchar(100) 
 );
 
 create table balanza(
-id int primary key auto_increment,
-COM varchar(100)
+  id int primary key auto_increment,
+  COM varchar(100)
 );
 
-create table configuracionbd(
-id int primary key auto_increment,
-servidor varchar(100),
-basedatos varchar(100),
-usuario varchar(100),
-contrasena  varchar(100),
-fecha datetime
+create table celda_peso(
+  id int primary key auto_increment,
+  nombre_celda varchar(50),
+  valor_peso decimal(10,2),
+  fecha_registro datetime 
 );

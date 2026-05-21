@@ -53,6 +53,7 @@
             this.tsmiAbrirCalibracion = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCerrarCalibracion = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGuardarConfiguracion = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsbBd = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslblStatusConexion = new System.Windows.Forms.ToolStripStatusLabel();
@@ -62,10 +63,8 @@
             this.tsslblTrama = new System.Windows.Forms.ToolStripStatusLabel();
             this.timerTiempoConexion = new System.Windows.Forms.Timer(this.components);
             this.timerDataTrama = new System.Windows.Forms.Timer(this.components);
-            this.lblCeldaActiva = new System.Windows.Forms.Label();
             this.lstCeldas = new System.Windows.Forms.ListBox();
             this.TimerPesaje = new System.Windows.Forms.Timer(this.components);
-            this.tsbBd = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -73,9 +72,10 @@
             // btnRegistrar
             // 
             this.btnRegistrar.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnRegistrar.Location = new System.Drawing.Point(271, 297);
+            this.btnRegistrar.Location = new System.Drawing.Point(361, 366);
+            this.btnRegistrar.Margin = new System.Windows.Forms.Padding(4);
             this.btnRegistrar.Name = "btnRegistrar";
-            this.btnRegistrar.Size = new System.Drawing.Size(228, 40);
+            this.btnRegistrar.Size = new System.Drawing.Size(304, 49);
             this.btnRegistrar.TabIndex = 0;
             this.btnRegistrar.Text = "REGISTRAR PESO";
             this.btnRegistrar.UseVisualStyleBackColor = true;
@@ -85,9 +85,10 @@
             // 
             this.lblBalanza.AutoSize = true;
             this.lblBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 48F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBalanza.Location = new System.Drawing.Point(10, 84);
+            this.lblBalanza.Location = new System.Drawing.Point(13, 103);
+            this.lblBalanza.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblBalanza.Name = "lblBalanza";
-            this.lblBalanza.Size = new System.Drawing.Size(642, 73);
+            this.lblBalanza.Size = new System.Drawing.Size(791, 91);
             this.lblBalanza.TabIndex = 1;
             this.lblBalanza.Text = "PESO DE BALANZA";
             this.lblBalanza.Click += new System.EventHandler(this.label1_Click);
@@ -95,9 +96,10 @@
             // txtBalanza
             // 
             this.txtBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 48F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBalanza.Location = new System.Drawing.Point(202, 182);
+            this.txtBalanza.Location = new System.Drawing.Point(269, 224);
+            this.txtBalanza.Margin = new System.Windows.Forms.Padding(4);
             this.txtBalanza.Name = "txtBalanza";
-            this.txtBalanza.Size = new System.Drawing.Size(384, 80);
+            this.txtBalanza.Size = new System.Drawing.Size(511, 98);
             this.txtBalanza.TabIndex = 3;
             // 
             // toolStrip1
@@ -110,7 +112,7 @@
             this.tsbBd});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(645, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(860, 31);
             this.toolStrip1.TabIndex = 6;
             this.toolStrip1.Text = "toolStrip1";
             this.toolStrip1.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.toolStrip1_ItemClicked);
@@ -125,7 +127,7 @@
             this.tsddbtnLogin.Image = ((System.Drawing.Image)(resources.GetObject("tsddbtnLogin.Image")));
             this.tsddbtnLogin.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsddbtnLogin.Name = "tsddbtnLogin";
-            this.tsddbtnLogin.Size = new System.Drawing.Size(55, 22);
+            this.tsddbtnLogin.Size = new System.Drawing.Size(65, 28);
             this.tsddbtnLogin.Text = "LOGIN";
             // 
             // tsmiUsuario
@@ -133,33 +135,33 @@
             this.tsmiUsuario.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtUsuario});
             this.tsmiUsuario.Name = "tsmiUsuario";
-            this.tsmiUsuario.Size = new System.Drawing.Size(151, 22);
+            this.tsmiUsuario.Size = new System.Drawing.Size(187, 26);
             this.tsmiUsuario.Text = "USUARIO";
             // 
             // txtUsuario
             // 
             this.txtUsuario.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.txtUsuario.Name = "txtUsuario";
-            this.txtUsuario.Size = new System.Drawing.Size(100, 23);
+            this.txtUsuario.Size = new System.Drawing.Size(100, 27);
             // 
             // tsmiContraseña
             // 
             this.tsmiContraseña.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtContrasena});
             this.tsmiContraseña.Name = "tsmiContraseña";
-            this.tsmiContraseña.Size = new System.Drawing.Size(151, 22);
+            this.tsmiContraseña.Size = new System.Drawing.Size(187, 26);
             this.tsmiContraseña.Text = "CONTRASEÑA";
             // 
             // txtContrasena
             // 
             this.txtContrasena.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.txtContrasena.Name = "txtContrasena";
-            this.txtContrasena.Size = new System.Drawing.Size(121, 23);
+            this.txtContrasena.Size = new System.Drawing.Size(121, 27);
             // 
             // tsmiIngresar
             // 
             this.tsmiIngresar.Name = "tsmiIngresar";
-            this.tsmiIngresar.Size = new System.Drawing.Size(151, 22);
+            this.tsmiIngresar.Size = new System.Drawing.Size(187, 26);
             this.tsmiIngresar.Text = "INGRESAR";
             this.tsmiIngresar.Click += new System.EventHandler(this.tsmiIngresar_Click);
             // 
@@ -173,7 +175,7 @@
             this.tsddbMenu.Image = ((System.Drawing.Image)(resources.GetObject("tsddbMenu.Image")));
             this.tsddbMenu.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsddbMenu.Name = "tsddbMenu";
-            this.tsddbMenu.Size = new System.Drawing.Size(54, 22);
+            this.tsddbMenu.Size = new System.Drawing.Size(65, 28);
             this.tsddbMenu.Text = "MENÚ";
             this.tsddbMenu.Click += new System.EventHandler(this.toolStripDropDownButton1_Click);
             // 
@@ -184,39 +186,39 @@
             this.tsmiAbrirBalanza,
             this.tsmiCerrarBalanza});
             this.tsmiBalanza.Name = "tsmiBalanza";
-            this.tsmiBalanza.Size = new System.Drawing.Size(193, 22);
+            this.tsmiBalanza.Size = new System.Drawing.Size(240, 26);
             this.tsmiBalanza.Text = "Conexión balanza";
             // 
             // tscbBalanza
             // 
             this.tscbBalanza.Name = "tscbBalanza";
-            this.tscbBalanza.Size = new System.Drawing.Size(121, 23);
+            this.tscbBalanza.Size = new System.Drawing.Size(121, 28);
             // 
             // tsmiAbrirBalanza
             // 
             this.tsmiAbrirBalanza.Name = "tsmiAbrirBalanza";
-            this.tsmiAbrirBalanza.Size = new System.Drawing.Size(181, 22);
+            this.tsmiAbrirBalanza.Size = new System.Drawing.Size(195, 26);
             this.tsmiAbrirBalanza.Text = "Abrir";
             this.tsmiAbrirBalanza.Click += new System.EventHandler(this.tsmiAbrirBalanza_Click);
             // 
             // tsmiCerrarBalanza
             // 
             this.tsmiCerrarBalanza.Name = "tsmiCerrarBalanza";
-            this.tsmiCerrarBalanza.Size = new System.Drawing.Size(181, 22);
+            this.tsmiCerrarBalanza.Size = new System.Drawing.Size(195, 26);
             this.tsmiCerrarBalanza.Text = "Cerrar";
             this.tsmiCerrarBalanza.Click += new System.EventHandler(this.tsmiCerrarBalanza_Click);
             // 
             // tsmiSlave
             // 
             this.tsmiSlave.Name = "tsmiSlave";
-            this.tsmiSlave.Size = new System.Drawing.Size(193, 22);
+            this.tsmiSlave.Size = new System.Drawing.Size(240, 26);
             this.tsmiSlave.Text = "Seleccionar Celda";
             this.tsmiSlave.Click += new System.EventHandler(this.tsmiSlave_Click);
             // 
             // tsmiGuardarMenu
             // 
             this.tsmiGuardarMenu.Name = "tsmiGuardarMenu";
-            this.tsmiGuardarMenu.Size = new System.Drawing.Size(193, 22);
+            this.tsmiGuardarMenu.Size = new System.Drawing.Size(240, 26);
             this.tsmiGuardarMenu.Text = "Guardar configuración";
             this.tsmiGuardarMenu.Click += new System.EventHandler(this.tsmiGuardarMenu_Click);
             // 
@@ -229,7 +231,7 @@
             this.tsddbConfiguracion.Image = ((System.Drawing.Image)(resources.GetObject("tsddbConfiguracion.Image")));
             this.tsddbConfiguracion.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsddbConfiguracion.Name = "tsddbConfiguracion";
-            this.tsddbConfiguracion.Size = new System.Drawing.Size(115, 22);
+            this.tsddbConfiguracion.Size = new System.Drawing.Size(139, 28);
             this.tsddbConfiguracion.Text = "CONFIGURACIÓN";
             // 
             // tsmiCalibraciónBalanza
@@ -239,33 +241,43 @@
             this.tsmiAbrirCalibracion,
             this.tsmiCerrarCalibracion});
             this.tsmiCalibraciónBalanza.Name = "tsmiCalibraciónBalanza";
-            this.tsmiCalibraciónBalanza.Size = new System.Drawing.Size(195, 22);
+            this.tsmiCalibraciónBalanza.Size = new System.Drawing.Size(242, 26);
             this.tsmiCalibraciónBalanza.Text = "Calibración Balanza";
             // 
             // tstbCalibracion
             // 
             this.tstbCalibracion.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.tstbCalibracion.Name = "tstbCalibracion";
-            this.tstbCalibracion.Size = new System.Drawing.Size(100, 23);
+            this.tstbCalibracion.Size = new System.Drawing.Size(100, 27);
             // 
             // tsmiAbrirCalibracion
             // 
             this.tsmiAbrirCalibracion.Name = "tsmiAbrirCalibracion";
-            this.tsmiAbrirCalibracion.Size = new System.Drawing.Size(160, 22);
+            this.tsmiAbrirCalibracion.Size = new System.Drawing.Size(174, 26);
             this.tsmiAbrirCalibracion.Text = "ABRIR";
             // 
             // tsmiCerrarCalibracion
             // 
             this.tsmiCerrarCalibracion.Name = "tsmiCerrarCalibracion";
-            this.tsmiCerrarCalibracion.Size = new System.Drawing.Size(160, 22);
+            this.tsmiCerrarCalibracion.Size = new System.Drawing.Size(174, 26);
             this.tsmiCerrarCalibracion.Text = "CERRAR";
             // 
             // tsmiGuardarConfiguracion
             // 
             this.tsmiGuardarConfiguracion.Name = "tsmiGuardarConfiguracion";
-            this.tsmiGuardarConfiguracion.Size = new System.Drawing.Size(195, 22);
+            this.tsmiGuardarConfiguracion.Size = new System.Drawing.Size(242, 26);
             this.tsmiGuardarConfiguracion.Text = "Guardar Configuración";
             this.tsmiGuardarConfiguracion.Click += new System.EventHandler(this.tsmiGuardarConfiguracion_Click);
+            // 
+            // tsbBd
+            // 
+            this.tsbBd.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbBd.Image = ((System.Drawing.Image)(resources.GetObject("tsbBd.Image")));
+            this.tsbBd.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbBd.Name = "tsbBd";
+            this.tsbBd.Size = new System.Drawing.Size(33, 28);
+            this.tsbBd.Text = "BD";
+            this.tsbBd.Click += new System.EventHandler(this.tsbBd_Click);
             // 
             // statusStrip1
             // 
@@ -277,9 +289,10 @@
             this.tsslblTiempoConexion,
             this.toolStripStatusLabel2,
             this.tsslblTrama});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 558);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 688);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(645, 22);
+            this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 19, 0);
+            this.statusStrip1.Size = new System.Drawing.Size(860, 26);
             this.statusStrip1.TabIndex = 7;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -287,39 +300,39 @@
             // 
             this.toolStripStatusLabel1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(125, 17);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(163, 20);
             this.toolStripStatusLabel1.Text = "CONEXIÓN BALANZA";
             // 
             // tsslblStatusConexion
             // 
             this.tsslblStatusConexion.Name = "tsslblStatusConexion";
-            this.tsslblStatusConexion.Size = new System.Drawing.Size(40, 17);
+            this.tsslblStatusConexion.Size = new System.Drawing.Size(50, 20);
             this.tsslblStatusConexion.Text = "NONE";
             // 
             // toolStripStatusLabel3
             // 
             this.toolStripStatusLabel3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            this.toolStripStatusLabel3.Size = new System.Drawing.Size(124, 17);
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(159, 20);
             this.toolStripStatusLabel3.Text = "TIEMPO CONECTADO";
             // 
             // tsslblTiempoConexion
             // 
             this.tsslblTiempoConexion.Name = "tsslblTiempoConexion";
-            this.tsslblTiempoConexion.Size = new System.Drawing.Size(19, 17);
+            this.tsslblTiempoConexion.Size = new System.Drawing.Size(25, 20);
             this.tsslblTiempoConexion.Text = "0S";
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(37, 17);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(49, 20);
             this.toolStripStatusLabel2.Text = "DATA";
             // 
             // tsslblTrama
             // 
             this.tsslblTrama.Name = "tsslblTrama";
-            this.tsslblTrama.Size = new System.Drawing.Size(40, 17);
+            this.tsslblTrama.Size = new System.Drawing.Size(50, 20);
             this.tsslblTrama.Text = "NONE";
             // 
             // timerTiempoConexion
@@ -330,54 +343,33 @@
             // 
             this.timerDataTrama.Tick += new System.EventHandler(this.timerDataTrama_Tick);
             // 
-            // lblCeldaActiva
-            // 
-            this.lblCeldaActiva.AutoSize = true;
-            this.lblCeldaActiva.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCeldaActiva.Location = new System.Drawing.Point(7, 305);
-            this.lblCeldaActiva.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.lblCeldaActiva.Name = "lblCeldaActiva";
-            this.lblCeldaActiva.Size = new System.Drawing.Size(95, 24);
-            this.lblCeldaActiva.TabIndex = 8;
-            this.lblCeldaActiva.Text = "Celda #--";
-            // 
             // lstCeldas
             // 
             this.lstCeldas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lstCeldas.FormattingEnabled = true;
-            this.lstCeldas.ItemHeight = 16;
-            this.lstCeldas.Location = new System.Drawing.Point(11, 370);
-            this.lstCeldas.Margin = new System.Windows.Forms.Padding(2);
+            this.lstCeldas.ItemHeight = 20;
+            this.lstCeldas.Location = new System.Drawing.Point(15, 455);
+            this.lstCeldas.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.lstCeldas.Name = "lstCeldas";
-            this.lstCeldas.Size = new System.Drawing.Size(622, 148);
+            this.lstCeldas.Size = new System.Drawing.Size(828, 164);
             this.lstCeldas.TabIndex = 9;
             // 
             // TimerPesaje
             // 
             this.TimerPesaje.Tick += new System.EventHandler(this.TimerPesaje_Tick);
             // 
-            // tsbBd
-            // 
-            this.tsbBd.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsbBd.Image = ((System.Drawing.Image)(resources.GetObject("tsbBd.Image")));
-            this.tsbBd.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbBd.Name = "tsbBd";
-            this.tsbBd.Size = new System.Drawing.Size(26, 22);
-            this.tsbBd.Text = "BD";
-            this.tsbBd.Click += new System.EventHandler(this.tsbBd_Click);
-            // 
             // ViewMain
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(645, 580);
+            this.ClientSize = new System.Drawing.Size(860, 714);
             this.Controls.Add(this.lstCeldas);
-            this.Controls.Add(this.lblCeldaActiva);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.txtBalanza);
             this.Controls.Add(this.lblBalanza);
             this.Controls.Add(this.btnRegistrar);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "ViewMain";
             this.Text = "PRINCIPAL";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -425,7 +417,6 @@
         private System.Windows.Forms.ToolStripStatusLabel tsslblTrama;
         private System.Windows.Forms.ToolStripTextBox txtUsuario;
         private System.Windows.Forms.ToolStripTextBox txtContrasena;
-        private System.Windows.Forms.Label lblCeldaActiva;
         private System.Windows.Forms.ListBox lstCeldas;
         private System.Windows.Forms.ToolStripMenuItem tsmiSlave;
         private System.Windows.Forms.Timer TimerPesaje;

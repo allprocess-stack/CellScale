@@ -8,7 +8,7 @@ namespace FormulaGaussExample
     /// Contiene datos de conexión a la base de datos MySQL, configuración
     /// del puerto COM de la balanza y factores de calibración de las celdas.
     /// </summary>
-    internal class AppConfig
+    public class AppConfig
     {
         /// <summary>Dirección IP o nombre del servidor MySQL (ej: localhost).</summary>
         public string Servidor { get; set; }

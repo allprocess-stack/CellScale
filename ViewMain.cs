@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -44,8 +45,11 @@ namespace FormulaGaussExample
         private CalibracionLineal calibracionLineal;
 
         // Labels creados programáticamente para mostrar pesos (no existen en el diseñador)
-        private Label lblPesoUnificado;
-        private Label lblPesoIndividual;
+        //private Label lblPesoUnificado;
+        //private Label lblPesoIndividual;
+
+        // Índice round-robin para consultar celdas cada 250ms
+        private int indiceConsulta = 0;
 
         /// <summary>
         /// Inicializa el formulario principal.
@@ -107,6 +111,10 @@ namespace FormulaGaussExample
         private void Form1_Load(object sender, EventArgs e)
         {
             CargarPuertosCOM();
+
+            if (config != null)
+                tstbCalibracion.Text = config.CalibracionBalanza;
+
             CargarCeldasConfig();
             //CargarSlaveNumbers();
 
@@ -132,28 +140,28 @@ namespace FormulaGaussExample
 
             // Configurar el timer de pesaje (declarado en Form1.Designer.cs)
             // Este timer consulta el peso periódicamente cuando la balanza está conectada
-            TimerPesaje.Interval = 1000;
+            TimerPesaje.Interval = 250;
 
             // Configurar campo de contraseña para ocultar caracteres
             // Se accede al TextBox subyacente porque ToolStripTextBox no expone PasswordChar directamente
             txtContrasena.TextBox.PasswordChar = '*';
 
             // Crear labels dinámicos para mostrar pesos si no existen en el diseñador
-            if (lblPesoUnificado == null)
-            {
-                lblPesoUnificado = new Label();
-                lblPesoUnificado.Text = "Peso Total: 0.00 kg";
-                lblPesoUnificado.Location = new Point(10, 200);
-                this.Controls.Add(lblPesoUnificado);
-            }
+            //if (lblPesoUnificado == null)
+            //{
+            //    lblPesoUnificado = new Label();
+            //    lblPesoUnificado.Text = "Peso Total: 0.00 kg";
+            //    lblPesoUnificado.Location = new Point(10, 200);
+            //    this.Controls.Add(lblPesoUnificado);
+            //}
 
-            if (lblPesoIndividual == null)
-            {
-                lblPesoIndividual = new Label();
-                lblPesoIndividual.Text = "Celda #01: 0.00 kg";
-                lblPesoIndividual.Location = new Point(10, 220);
-                this.Controls.Add(lblPesoIndividual);
-            }
+            //if (lblPesoIndividual == null)
+            //{
+            //    lblPesoIndividual = new Label();
+            //    lblPesoIndividual.Text = "Celda #01: 0.00 kg";
+            //    lblPesoIndividual.Location = new Point(10, 220);
+            //    this.Controls.Add(lblPesoIndividual);
+            //}
         }
 
         /// <summary>
@@ -259,16 +267,16 @@ namespace FormulaGaussExample
         {
             this.Invoke(new Action(() =>
             {
-                if (direccion == celdaSeleccionada)
-                {
-                    lblPesoIndividual.Text = $"Celda #{direccion:D2}: {pesoCalibrado:F2} kg";
-                }
+                //if (direccion == celdaSeleccionada)
+                //{
+                //    lblPesoIndividual.Text = $"Celda #{direccion:D2}: {pesoCalibrado:F2} kg";
+                //}
 
                 double pesoUnificado = manager.ObtenerPesoUnificado();
                 txtBalanza.Text = pesoUnificado.ToString("F2");
                 ultimoPesoCalibrado = pesoUnificado;
-                lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
-                lblCeldaActiva.Text = $"Celda activa: #{celdaSeleccionada:D2}";
+                //lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
+                //lblCeldaActiva.Text = $"Celda activa: #{celdaSeleccionada:D2}";
             }));
         }
 
@@ -519,10 +527,10 @@ namespace FormulaGaussExample
             tiempoInicioDesconexion = DateTime.Now;
             btnRegistrar.Enabled = false;
             txtBalanza.Clear();
-            lblCeldaActiva.Text = "Celda #--";
+            //lblCeldaActiva.Text = "Celda #--";
             lstCeldas.Items.Clear();
-            lblPesoUnificado.Text = "Peso Total: 0.00 kg";
-            lblPesoIndividual.Text = "Celda #--: 0.00 kg";
+            //lblPesoUnificado.Text = "Peso Total: 0.00 kg";
+            //lblPesoIndividual.Text = "Celda #--: 0.00 kg";
 
             MessageBox.Show("Balanza desconectada correctamente.", "Desconexión", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -691,7 +699,7 @@ namespace FormulaGaussExample
 
                 double pesoUnificado = manager.ObtenerPesoUnificado();
                 txtBalanza.Text = pesoUnificado.ToString("F2");
-                lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
+                //lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
             }
         }
 
@@ -711,26 +719,41 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Timer principal de pesaje que se ejecuta cada 1 segundo mientras
-        /// la balanza está conectada. Actualiza el peso unificado (suma total)
-        /// y el peso individual de la celda seleccionada.
+        /// Timer principal de pesaje que se ejecuta cada 250ms mientras
+        /// la balanza está conectada. Consulta una celda distinta cada tick
+        /// (round-robin) para registrar la medición de todas las celdas.
         /// </summary>
         private void TimerPesaje_Tick(object sender, EventArgs e)
         {
             if (manager != null && manager.IsOpen)
             {
+                var celdasConectadas = manager.Celdas.Values
+                    .Where(c => c.Connected)
+                    .OrderBy(c => c.SlaveNumber)
+                    .ToList();
+
+                if (celdasConectadas.Count > 0)
+                {
+                    int idx = indiceConsulta % celdasConectadas.Count;
+                    var celda = celdasConectadas[idx];
+                    manager.ConsultarPeso(celda.SlaveNumber);
+                    indiceConsulta++;
+                }
+
                 // Actualizar peso unificado
                 double pesoUnificado = manager.ObtenerPesoUnificado();
                 txtBalanza.Text = pesoUnificado.ToString("F2");
                 ultimoPesoCalibrado = pesoUnificado;
-                lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
+                //lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
 
-                // Consultar peso individual de la celda seleccionada
-                if (celdaSeleccionada >= 1 && celdaSeleccionada <= 15)
-                {
-                    double pesoIndividual = manager.ConsultarPeso(celdaSeleccionada);
-                    lblPesoIndividual.Text = $"Celda #{celdaSeleccionada:D2}: {pesoIndividual:F2} kg";
-                }
+                // Mostrar celda activa seleccionada
+                //if (celdaSeleccionada >= 1 && celdaSeleccionada <= 15)
+                //{
+                //    if (manager.Celdas.ContainsKey(celdaSeleccionada))
+                //    {
+                //        lblPesoIndividual.Text = $"Celda #{celdaSeleccionada:D2}: {manager.Celdas[celdaSeleccionada].CalibratedWeight:F2} kg";
+                //    }
+                //}
             }
         }
 
@@ -822,9 +845,14 @@ namespace FormulaGaussExample
             {
                 tscbBalanza.Items.Add(puerto);
             }
+
             if (tscbBalanza.Items.Count > 0)
             {
-                tscbBalanza.SelectedIndex = 0;
+                int index = -1;
+                if (!string.IsNullOrEmpty(config?.COMBalanza))
+                    index = tscbBalanza.FindStringExact(config.COMBalanza);
+
+                tscbBalanza.SelectedIndex = index >= 0 ? index : 0;
             }
         }
 
@@ -911,7 +939,7 @@ namespace FormulaGaussExample
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            new ViewCeldas(manager).Show();
+            new ViewCeldas(manager, conexion).Show();
         }
 
         private void tsbBd_Click(object sender, EventArgs e)

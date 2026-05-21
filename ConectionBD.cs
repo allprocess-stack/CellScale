@@ -9,7 +9,7 @@ namespace FormulaGaussExample
     /// Proporciona métodos para abrir/cerrar conexión, ejecutar consultas SELECT
     /// (EjecutarConsulta) y comandos INSERT/UPDATE/DELETE (EjecutarNonQuery).
     /// </summary>
-    internal class ConectionBD
+    public class ConectionBD
     {
         // Objeto de conexión MySQL subyacente
         private MySqlConnection conexion;
