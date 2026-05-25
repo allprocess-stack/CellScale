@@ -77,13 +77,13 @@ namespace FormulaGaussExample
                 // Crear configuración por defecto para evitar null reference
                 config = new AppConfig
                 {
-                    Servidor = "localhost",
-                    BD = "bdCellScale",
-                    Puerto = "3306",
-                    Usuario = "root",
+                    Servidor = "",
+                    BD = "",
+                    Puerto = "",
+                    Usuario = "",
                     Contrasena = "",
-                    COMBalanza = "COM3",
-                    CalibracionBalanza = "10000"
+                    COMBalanza = "",
+                    CalibracionBalanza = ""
                 };
             }
 
@@ -113,7 +113,10 @@ namespace FormulaGaussExample
             CargarPuertosCOM();
 
             if (config != null)
+            {
                 tstbCalibracion.Text = config.CalibracionBalanza;
+                tscbBalanza.Text = config.COMBalanza;
+            }
 
             CargarCeldasConfig();
             //CargarSlaveNumbers();
@@ -146,22 +149,9 @@ namespace FormulaGaussExample
             // Se accede al TextBox subyacente porque ToolStripTextBox no expone PasswordChar directamente
             txtContrasena.TextBox.PasswordChar = '*';
 
-            // Crear labels dinámicos para mostrar pesos si no existen en el diseñador
-            //if (lblPesoUnificado == null)
-            //{
-            //    lblPesoUnificado = new Label();
-            //    lblPesoUnificado.Text = "Peso Total: 0.00 kg";
-            //    lblPesoUnificado.Location = new Point(10, 200);
-            //    this.Controls.Add(lblPesoUnificado);
-            //}
-
-            //if (lblPesoIndividual == null)
-            //{
-            //    lblPesoIndividual = new Label();
-            //    lblPesoIndividual.Text = "Celda #01: 0.00 kg";
-            //    lblPesoIndividual.Location = new Point(10, 220);
-            //    this.Controls.Add(lblPesoIndividual);
-            //}
+            // Conectar automáticamente la balanza al iniciar la aplicación
+            if (config != null && !string.IsNullOrEmpty(config.COMBalanza))
+                _ = ConectarBalanza(config.COMBalanza);
         }
 
         /// <summary>
@@ -310,8 +300,12 @@ namespace FormulaGaussExample
         {
             try
             {
+                // Variables de login
                 string usuario = txtUsuario.Text.Trim();
                 string contrasena = txtContrasena.Text.Trim();
+                // Usuario Master
+                var userMaster = (usuario == "anthony" && contrasena == "12345");
+
 
                 if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(contrasena))
                 {
@@ -324,12 +318,6 @@ namespace FormulaGaussExample
                 {
                     MessageBox.Show("No hay conexión a la base de datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
-                }
-
-                if (usuario=="anthony"&&contrasena=="12345") {
-                    MessageBox.Show("Login exitoso(MASTER)", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    tsddbConfiguracion.Visible = true;
-                    tsddbMenu.Visible = true;
                 }
 
                 // Consultar usuario en la base de datos
@@ -346,6 +334,11 @@ namespace FormulaGaussExample
                     if (reader.Read())
                     {
                         MessageBox.Show("Login exitoso", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        tsddbConfiguracion.Visible = true;
+                        tsddbMenu.Visible = true;
+                    } else if(userMaster)
+                    {
+                        MessageBox.Show("Login exitoso(Usuario Master)", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         tsddbConfiguracion.Visible = true;
                         tsddbMenu.Visible = true;
                     }
@@ -381,22 +374,12 @@ namespace FormulaGaussExample
                     MessageBox.Show("No hay conexión a la base de datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
-                var parametros = new Dictionary<string, object>
-                {
-                    {"@COM", balanzaCOM }
-                };
-
-                string query = "INSERT INTO balanza (COM) VALUES(@COM)";
-                int filas = conexion.EjecutarNonQuery(query, parametros);
-                if (filas > 0)
-                {
-                    MessageBox.Show("Configuración guardada correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Error al guardar configuración", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                // Guardar valor de Puerto de balanza
+                config.COMBalanza=balanzaCOM;
+                // Persistir en el archivo config.json
+                ConfigManager.GuardarConfig(config);
+                MessageBox.Show("Configuración Balanza guardada correctamente\n",
+                "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -414,17 +397,21 @@ namespace FormulaGaussExample
             var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
             menu.AutoClose = false;
 
-            //string comAppconfig = config.COMBalanza;
             string puertoBalanza = tscbBalanza.Text;
-            if (string.IsNullOrEmpty(puertoBalanza)
-                //|| comAppconfig==null
-                )
+            if (string.IsNullOrEmpty(puertoBalanza))
             {
                 MessageBox.Show("Seleccione un puerto COM para la balanza", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 menu.AutoClose = true;
                 return;
             }
 
+            await ConectarBalanza(puertoBalanza);
+
+            menu.AutoClose = true;
+        }
+
+        private async Task ConectarBalanza(string puertoBalanza)
+        {
             try
             {
                 manager.Conectar(puertoBalanza);
@@ -465,8 +452,6 @@ namespace FormulaGaussExample
             {
                 MessageBox.Show($"Error al conectar: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            menu.AutoClose = true;
         }
 
         /// <summary>

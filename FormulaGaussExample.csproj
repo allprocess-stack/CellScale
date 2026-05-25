@@ -56,6 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BalanzaMatricial.cs" />
     <Compile Include="CeldaInfo.cs" />
     <Compile Include="CeldaManager.cs" />
     <Compile Include="ConectionBD.cs" />

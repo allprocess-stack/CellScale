@@ -34,16 +34,29 @@ namespace FormulaGaussExample
         // Motor de calibración multivariable (modo avanzado)
         private CalibracionLineal calibracionMultivariable;
 
+        // Motor de calibración matricial para corrección de excentricidad
+        private BalanzaMatricial calibracionMatricial;
+
         /// <summary>
         /// Obtiene el motor de calibración multivariable activo.
         /// </summary>
         public CalibracionLineal CalibracionMultivariable => calibracionMultivariable;
 
         /// <summary>
+        /// Obtiene el motor de calibración matricial activo.
+        /// </summary>
+        public BalanzaMatricial CalibracionMatricial => calibracionMatricial;
+
+        /// <summary>
         /// Indica qué modo de calibración está activo.
         /// true = multivariable (m1..m4, B), false = simple (factor por celda).
         /// </summary>
         public bool UsarCalibracionMultivariable { get; set; } = false;
+
+        /// <summary>
+        /// Indica si la calibración matricial está activa.
+        /// </summary>
+        public bool UsarCalibracionMatricial { get; set; } = false;
 
         /// <summary>
         /// Diccionario de celdas detectadas en el bus, indexadas por dirección esclavo.
@@ -100,6 +113,30 @@ namespace FormulaGaussExample
         {
             calibracionMultivariable = null;
             UsarCalibracionMultivariable = false;
+        }
+
+        /// <summary>
+        /// Configura la calibración matricial con los coeficientes resueltos.
+        /// Activa el modo de calibración matricial automáticamente.
+        /// </summary>
+        public void ConfigurarCalibracionMatricial(double[] coeficientes)
+        {
+            if (coeficientes == null || coeficientes.Length != 4)
+                throw new ArgumentException("Debe proporcionar 4 coeficientes de corrección.");
+
+            calibracionMatricial = new BalanzaMatricial();
+            calibracionMatricial.EstablecerCoeficientes(coeficientes);
+            UsarCalibracionMatricial = true;
+            UsarCalibracionMultivariable = false;
+        }
+
+        /// <summary>
+        /// Desactiva la calibración matricial y vuelve al modo simple.
+        /// </summary>
+        public void DesactivarCalibracionMatricial()
+        {
+            calibracionMatricial = null;
+            UsarCalibracionMatricial = false;
         }
 
         /// <summary>
@@ -478,6 +515,18 @@ namespace FormulaGaussExample
         /// <returns>Peso total del sistema en kg.</returns>
         public double ObtenerPesoUnificado()
         {
+            // Usar modelo matricial si está activo (corrección de excentricidad)
+            if (UsarCalibracionMatricial && calibracionMatricial != null && calibracionMatricial.EstaCalibrado)
+            {
+                double[] lecturas = new double[4];
+                int[] direcciones = { 1, 2, 3, 4 };
+                for (int i = 0; i < 4; i++)
+                {
+                    lecturas[i] = Celdas.ContainsKey(direcciones[i]) ? Celdas[direcciones[i]].CalibratedWeight : 0;
+                }
+                return calibracionMatricial.ObtenerPesoCorregido(lecturas);
+            }
+
             // Usar modelo multivariable si está activo
             if (UsarCalibracionMultivariable && calibracionMultivariable != null && calibracionMultivariable.EstaCalibrado)
             {
