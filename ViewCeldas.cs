@@ -1,6 +1,6 @@
 ﻿// Resumen: Formulario para visualizar y consultar el peso de las celdas de carga
-// conectadas al bus RS-485. Muestra hasta 4 celdas en slots (label + TextBox + botón),
-// con un ComboBox para navegar entre ellas. Incluye timer de actualización periódica.
+// conectadas al bus RS-485. Muestra hasta 4 celdas en slots (label + TextBox + botón).
+// Los slots se habilitan/deshabilitan según la cantidad de celdas detectadas.
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -22,7 +22,7 @@ namespace FormulaGaussExample
             this.manager = manager;
             this.conexion = conexion;
 
-            // Eventos ya suscriptos en Designer.cs (cbxCeldas, btnCelda1..4, btnPesos, Load)
+            // Eventos ya suscriptos en Designer.cs (btnCelda1..4, btnPesos, Load)
             this.FormClosing += ViewCeldas_FormClosing;
 
             timerActualizacion = new Timer();
@@ -34,61 +34,24 @@ namespace FormulaGaussExample
         {
             if (manager == null)
             {
-                cbxCeldas.Items.Clear();
-                cbxCeldas.Items.Add("Error: Sin referencia al manager");
+                MessageBox.Show("Error: Sin referencia al manager", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            CargarCeldasConectadas();
-
-            if (cbxCeldas.Items.Count > 0)
-                cbxCeldas.SelectedIndex = 0;
+            ActualizarSlots();
 
             manager.PesoActualizado += Manager_PesoActualizado;
             timerActualizacion.Start();
         }
 
-        private void CargarCeldasConectadas()
-        {
-            cbxCeldas.Items.Clear();
-
-            var celdasConectadas = manager.Celdas.Values
-                .Where(c => c.Connected)
-                .OrderBy(c => c.SlaveNumber)
-                .ToList();
-
-            if (celdasConectadas.Count == 0)
-            {
-                cbxCeldas.Items.Add("No hay celdas conectadas");
-                return;
-            }
-
-            foreach (var celda in celdasConectadas)
-            {
-                string serial = celda.SerialNumber ?? "N/A";
-                if (serial.Length > 20)
-                    serial = serial.Substring(0, 20) + "...";
-                cbxCeldas.Items.Add($"Celda #{celda.SlaveNumber:D2} - {serial}");
-            }
-        }
-
-        private void cbxCeldas_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            ActualizarSlots();
-        }
-
         private void ActualizarSlots()
         {
-            if (manager == null || cbxCeldas.SelectedIndex < 0) return;
+            if (manager == null) return;
 
             var celdasConectadas = manager.Celdas.Values
                 .Where(c => c.Connected)
                 .OrderBy(c => c.SlaveNumber)
                 .ToList();
-
-            if (celdasConectadas.Count == 0) return;
-
-            int startIndex = cbxCeldas.SelectedIndex;
 
             for (int i = 0; i < 4; i++)
             {
@@ -96,11 +59,9 @@ namespace FormulaGaussExample
                 TextBox txt = ObtenerTextBox(i);
                 Button btn = ObtenerButton(i);
 
-                int celdaIndex = startIndex + i;
-
-                if (celdaIndex < celdasConectadas.Count)
+                if (i < celdasConectadas.Count)
                 {
-                    var celda = celdasConectadas[celdaIndex];
+                    var celda = celdasConectadas[i];
 
                     lbl.Text = $"Celda #{celda.SlaveNumber:D2}";
                     lbl.ForeColor = SystemColors.ControlText;
@@ -178,19 +139,21 @@ namespace FormulaGaussExample
                 .OrderBy(c => c.SlaveNumber)
                 .ToList();
 
-            int startIndex = cbxCeldas.SelectedIndex;
-            if (startIndex < 0 || startIndex + slotIndex >= celdasConectadas.Count)
+            if (slotIndex >= celdasConectadas.Count)
             {
                 MessageBox.Show("No se puede consultar peso: la celda no está disponible.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            int direccion = celdasConectadas[startIndex + slotIndex].SlaveNumber;
+            int direccion = celdasConectadas[slotIndex].SlaveNumber;
             double peso = manager.ConsultarPeso(direccion);
 
             ObtenerTextBox(slotIndex).Text = $"{peso:F2} kg";
 
             GuardarPesoEnBD($"Celda #{direccion:D2}", peso);
+
+            // Muestra mensaje de confirmación al guardar el peso individual en BD
+            MessageBox.Show($"Peso de Celda #{direccion:D2}: {peso:F2} kg guardado en BD.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void GuardarPesoEnBD(string nombreCelda, double peso)
@@ -222,29 +185,21 @@ namespace FormulaGaussExample
             foreach (var celda in manager.Celdas.Values)
             {
                 if (celda.Connected)
+                {
                     manager.ConsultarPeso(celda.SlaveNumber);
+                    // Guarda cada peso en la base de datos
+                    GuardarPesoEnBD($"Celda #{celda.SlaveNumber:D2}", celda.CalibratedWeight);
+                }
             }
 
             ActualizarSlots();
+            // Muestra mensaje de confirmación al guardar todos los pesos en BD
+            MessageBox.Show("Todos los pesos de las celdas conectadas se han guardado en la base de datos.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void TimerActualizacion_Tick(object sender, EventArgs e)
         {
             if (manager == null || !manager.IsOpen) return;
-
-            int cantidadConectadas = manager.Celdas.Values.Count(c => c.Connected);
-
-            if (cantidadConectadas != cbxCeldas.Items.Count
-                && !cbxCeldas.Text.Contains("No hay")
-                && !cbxCeldas.Text.Contains("Error"))
-            {
-                int selectedIndex = cbxCeldas.SelectedIndex;
-                CargarCeldasConectadas();
-                if (selectedIndex >= 0 && selectedIndex < cbxCeldas.Items.Count)
-                    cbxCeldas.SelectedIndex = selectedIndex;
-                else if (cbxCeldas.Items.Count > 0)
-                    cbxCeldas.SelectedIndex = 0;
-            }
 
             ActualizarSlots();
         }
