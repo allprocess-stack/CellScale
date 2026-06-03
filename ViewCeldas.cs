@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace FormulaGaussExample
@@ -14,6 +15,7 @@ namespace FormulaGaussExample
         private CeldaManager manager;
         private ConectionBD conexion;
         private Timer timerActualizacion;
+        private TextBox[] txtConsultCelda;
 
         public ViewCeldas(CeldaManager manager, ConectionBD conexion)
         {
@@ -28,6 +30,29 @@ namespace FormulaGaussExample
             timerActualizacion = new Timer();
             timerActualizacion.Interval = 250;
             timerActualizacion.Tick += TimerActualizacion_Tick;
+
+            InicializarConsultTextBoxes();
+        }
+
+        private void InicializarConsultTextBoxes()
+        {
+            int[] xPositions = { 26, 140, 250, 363 };
+            int yPos = 270;
+            txtConsultCelda = new TextBox[4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                txtConsultCelda[i] = new TextBox
+                {
+                    Location = new Point(xPositions[i], yPos),
+                    Size = new Size(100, 20),
+                    Name = $"txtConsultCelda{i + 1}",
+                    Text = $"S0{i}"
+                };
+                Controls.Add(txtConsultCelda[i]);
+            }
+
+            this.ClientSize = new Size(483, 320);
         }
 
         private void ViewCeldas_Load(object sender, EventArgs e)
@@ -70,6 +95,18 @@ namespace FormulaGaussExample
                     txt.Enabled = true;
 
                     btn.Tag = celda.SlaveNumber;
+                    btn.Enabled = true;
+                }
+                else if (manager.IsOpen)
+                {
+                    int addr = i + 1;
+                    lbl.Text = $"Celda #{addr:D2}";
+                    lbl.ForeColor = SystemColors.ControlText;
+
+                    txt.Text = "---";
+                    txt.Enabled = true;
+
+                    btn.Tag = addr;
                     btn.Enabled = true;
                 }
                 else
@@ -122,38 +159,73 @@ namespace FormulaGaussExample
             }
         }
 
-        private void btnCelda1_Click(object sender, EventArgs e) => ConsultarPesoSlot(0);
-        private void btnCelda2_Click(object sender, EventArgs e) => ConsultarPesoSlot(1);
-        private void btnCelda3_Click(object sender, EventArgs e) => ConsultarPesoSlot(2);
-        private void btnCelda4_Click(object sender, EventArgs e) => ConsultarPesoSlot(3);
+        private TextBox ObtenerConsultTextBox(int index)
+        {
+            if (index >= 0 && index < txtConsultCelda.Length)
+                return txtConsultCelda[index];
+            return null;
+        }
 
-        private void ConsultarPesoSlot(int slotIndex)
+        private int ParsearDireccionConsult(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return -1;
+            string limpio = text.Trim().ToUpper().Replace("S", "").Replace(" ", "");
+            if (int.TryParse(limpio, out int addr))
+                return addr;
+            return -1;
+        }
+
+        private async void btnCelda1_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(0);
+        private async void btnCelda2_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(1);
+        private async void btnCelda3_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(2);
+        private async void btnCelda4_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(3);
+
+        private async Task ConsultarPesoSlotAsync(int slotIndex)
         {
             if (manager == null || !manager.IsOpen) { 
                 MessageBox.Show("No se puede consultar peso: manager no inicializado o puerto cerrado.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            var celdasConectadas = manager.Celdas.Values
-                .Where(c => c.Connected)
-                .OrderBy(c => c.SlaveNumber)
-                .ToList();
+            TextBox txtConsult = ObtenerConsultTextBox(slotIndex);
+            Button btn = ObtenerButton(slotIndex);
+            int direccion;
 
-            if (slotIndex >= celdasConectadas.Count)
+            if (txtConsult != null && !string.IsNullOrWhiteSpace(txtConsult.Text))
+            {
+                direccion = ParsearDireccionConsult(txtConsult.Text);
+                if (direccion < 0)
+                {
+                    MessageBox.Show($"Dirección inválida en txtConsultCelda{slotIndex + 1}. Use formato: S00, 00, 0, etc.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                txtConsult.Text = $"S{direccion:D2}";
+            }
+            else if (btn?.Tag is int tagAddr)
+            {
+                direccion = tagAddr;
+            }
+            else
             {
                 MessageBox.Show("No se puede consultar peso: la celda no está disponible.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            int direccion = celdasConectadas[slotIndex].SlaveNumber;
-            double peso = manager.ConsultarPeso(direccion);
+            btn.Enabled = false;
+            try
+            {
+                double peso = await Task.Run(() => manager.ConsultarPesoMultiLinea(direccion));
 
-            ObtenerTextBox(slotIndex).Text = $"{peso:F2} kg";
+                ObtenerTextBox(slotIndex).Text = $"{peso:F2} kg";
 
-            GuardarPesoEnBD($"Celda #{direccion:D2}", peso);
+                GuardarPesoEnBD($"Celda #{direccion:D2}", peso);
 
-            // Muestra mensaje de confirmación al guardar el peso individual en BD
-            MessageBox.Show($"Peso de Celda #{direccion:D2}: {peso:F2} kg guardado en BD.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show($"Peso de Celda #{direccion:D2}: {peso:F2} kg guardado en BD.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            finally
+            {
+                btn.Enabled = true;
+            }
         }
 
         private void GuardarPesoEnBD(string nombreCelda, double peso)
@@ -178,23 +250,41 @@ namespace FormulaGaussExample
             }
         }
 
-        private void btnPesos_Click(object sender, EventArgs e)
+        private async void btnPesos_Click(object sender, EventArgs e)
         {
             if (manager == null || !manager.IsOpen) return;
 
-            foreach (var celda in manager.Celdas.Values)
+            btnPesos.Enabled = false;
+            try
             {
-                if (celda.Connected)
+                for (int i = 0; i < 4; i++)
                 {
-                    manager.ConsultarPeso(celda.SlaveNumber);
-                    // Guarda cada peso en la base de datos
-                    GuardarPesoEnBD($"Celda #{celda.SlaveNumber:D2}", celda.CalibratedWeight);
-                }
-            }
+                    TextBox txtConsult = ObtenerConsultTextBox(i);
+                    int direccion;
 
-            ActualizarSlots();
-            // Muestra mensaje de confirmación al guardar todos los pesos en BD
-            MessageBox.Show("Todos los pesos de las celdas conectadas se han guardado en la base de datos.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (txtConsult != null && !string.IsNullOrWhiteSpace(txtConsult.Text))
+                    {
+                        direccion = ParsearDireccionConsult(txtConsult.Text);
+                        if (direccion < 0) continue;
+                        txtConsult.Text = $"S{direccion:D2}";
+                    }
+                    else
+                    {
+                        direccion = i + 1;
+                    }
+
+                    double peso = await Task.Run(() => manager.ConsultarPesoMultiLinea(direccion));
+                    ObtenerTextBox(i).Text = $"{peso:F2} kg";
+                    GuardarPesoEnBD($"Celda #{direccion:D2}", peso);
+                }
+
+                ActualizarSlots();
+                MessageBox.Show("Todas las celdas consultadas y guardadas en BD.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            finally
+            {
+                btnPesos.Enabled = true;
+            }
         }
 
         private void TimerActualizacion_Tick(object sender, EventArgs e)
@@ -217,6 +307,11 @@ namespace FormulaGaussExample
 
             if (manager != null)
                 manager.PesoActualizado -= Manager_PesoActualizado;
+        }
+
+        private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+
         }
     }
 }

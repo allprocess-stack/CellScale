@@ -568,14 +568,14 @@ namespace FormulaGaussExample
                     calibracionLineal = new CalibracionLineal();
 
                 // Recolectar lecturas raw de las celdas 1 a 4
-                double x1 = manager.Celdas.ContainsKey(1) ? manager.Celdas[1].RawWeight : 0;
-                double x2 = manager.Celdas.ContainsKey(2) ? manager.Celdas[2].RawWeight : 0;
-                double x3 = manager.Celdas.ContainsKey(3) ? manager.Celdas[3].RawWeight : 0;
+                double x1 = manager.Celdas.ContainsKey(1) ? manager.Celdas[0].RawWeight : 0;
+                double x2 = manager.Celdas.ContainsKey(2) ? manager.Celdas[1].RawWeight : 0;
+                double x3 = manager.Celdas.ContainsKey(3) ? manager.Celdas[2].RawWeight : 0;
                 double x4 = manager.Celdas.ContainsKey(4) ? manager.Celdas[4].RawWeight : 0;
 
                 // Mostrar las lecturas actuales y confirmar
                 string mensajePunto =
-                    $"Punto de calibración #{PuntosCalibracion.Count + 1}:\n\n" +
+                    $"Punto de calibración #{PuntosCalibracion.Count}:\n\n" +
                     $"Peso conocido: {pesoConocido} kg\n" +
                     $"Celda 1 (raw): {x1}\n" +
                     $"Celda 2 (raw): {x2}\n" +

@@ -263,9 +263,48 @@ namespace FormulaGaussExample
             if (string.IsNullOrEmpty(trama))
                 return 0;
 
-            Match match = Regex.Match(trama, @"[-+]?\d+\.?\d*");
-            if (match.Success && double.TryParse(match.Value, out double valor))
-                return valor;
+            MatchCollection matches = Regex.Matches(trama, @"[-+]?\d+\.?\d*");
+            if (matches.Count > 0)
+            {
+                Match ultimo = matches[matches.Count - 1];
+                if (double.TryParse(ultimo.Value, out double valor))
+                    return valor;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Extrae el peso desde una respuesta en formato HBM (signo + 7 dígitos, centésimas de kg).
+        /// La respuesta típica es: S98MSV?S00 00057208  →  extrae " 0057208" → 572.08 kg
+        /// Formato: [espacio o -] + 7 dígitos, en centésimas de kilogramo.
+        /// Busca el patrón al FINAL de la trama para ignorar eco de comandos.
+        /// </summary>
+        /// <param name="trama">Trama completa recibida del puerto serial.</param>
+        /// <returns>Peso en kg extraído, o 0 si no se pudo parsear.</returns>
+        public double ExtraerPesoHBM(string trama)
+        {
+            if (string.IsNullOrEmpty(trama))
+                return 0;
+
+            // Buscar patrón HBM al final: espacio o guión + 7 dígitos
+            Match match = Regex.Match(trama, @"([- ])(\d{7})$");
+            if (match.Success && int.TryParse(match.Groups[2].Value, out int digitos))
+            {
+                double peso = digitos / 100.0;
+                if (match.Groups[1].Value == "-")
+                    peso = -peso;
+                return peso;
+            }
+
+            // Fallback: buscar cualquier número al final de la trama
+            MatchCollection matches = Regex.Matches(trama, @"[-+]?\d+\.?\d*");
+            if (matches.Count > 0)
+            {
+                Match ultimo = matches[matches.Count - 1];
+                if (double.TryParse(ultimo.Value, out double valor))
+                    return valor;
+            }
 
             return 0;
         }
@@ -318,6 +357,91 @@ namespace FormulaGaussExample
                     comandoEnProgreso = false;
                 }
             }
+        }
+
+        /// <summary>
+        /// Consulta el peso de una celda usando el protocolo multi-línea HBM.
+        /// Envía 3 mensajes consecutivos: S98 -> MSV? -> S{dir}
+        /// Esto es requerido para compatibilidad con ciertos firmwares HBM.
+        /// </summary>
+        /// <param name="direccion">Dirección de la celda (0-15).</param>
+        /// <returns>Peso calibrado de la celda en kg.</returns>
+        public double ConsultarPesoMultiLinea(int direccion)
+        {
+            if (puerto == null || !puerto.IsOpen)
+                return 0;
+
+            string limpia = null;
+            double rawWeight = 0;
+            string errorMsg = null;
+
+            // Solo el trabajo serial va dentro del lock
+            lock (serialLock)
+            {
+                try
+                {
+                    comandoEnProgreso = true;
+
+                    Thread.Sleep(100);
+                    puerto.DiscardInBuffer();
+                    puerto.Write($"S98\r\n");
+
+                    Thread.Sleep(100);
+                    puerto.DiscardInBuffer();
+                    puerto.Write($"MSV?\r\n");
+
+                    Thread.Sleep(100);
+                    puerto.DiscardInBuffer();
+                    puerto.Write($"S{direccion:D2}\r\n");
+
+                    Thread.Sleep(300);
+                    string respuesta = puerto.ReadExisting();
+                    limpia = LimpiarTrama(respuesta);
+                    rawWeight = ExtraerPesoHBM(limpia);
+                }
+                catch (Exception ex)
+                {
+                    errorMsg = ex.Message;
+                }
+                finally
+                {
+                    comandoEnProgreso = false;
+                }
+            }
+
+            // Eventos FUERA del lock para evitar deadlocks con Control.Invoke()
+            if (errorMsg != null)
+            {
+                TramaRecibida?.Invoke($"ERROR ML ({direccion:D2}): {errorMsg}");
+                return 0;
+            }
+
+            TramaRecibida?.Invoke($"ML ({direccion:D2}): {limpia}");
+
+            bool respuestaValida = !string.IsNullOrEmpty(limpia)
+                                   && limpia.Length > 0;
+
+            if (!respuestaValida)
+                return 0;
+
+            if (!Celdas.ContainsKey(direccion))
+                Celdas[direccion] = new CeldaInfo { SlaveNumber = direccion };
+
+            Celdas[direccion].RawWeight = rawWeight;
+            Celdas[direccion].LastRead = DateTime.Now;
+            Celdas[direccion].Connected = true;
+
+            if (UsarCalibracionMultivariable && calibracionMultivariable != null)
+            {
+                Celdas[direccion].CalibratedWeight = rawWeight;
+            }
+            else
+            {
+                Celdas[direccion].CalibratedWeight = rawWeight * GetFactorCalibracion(direccion);
+            }
+
+            PesoActualizado?.Invoke(direccion, Celdas[direccion].CalibratedWeight);
+            return Celdas[direccion].CalibratedWeight;
         }
 
         /// <summary>
