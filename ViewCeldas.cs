@@ -306,7 +306,21 @@ namespace FormulaGaussExample
             timerActualizacion?.Dispose();
 
             if (manager != null)
+            {
                 manager.PesoActualizado -= Manager_PesoActualizado;
+                manager.Celdas.Clear();
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                TextBox txtPeso = ObtenerTextBox(i);
+                if (txtPeso != null)
+                    txtPeso.Text = "---";
+
+                TextBox txtConsult = ObtenerConsultTextBox(i);
+                if (txtConsult != null)
+                    txtConsult.Text = $"S0{i}";
+            }
         }
 
         private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)

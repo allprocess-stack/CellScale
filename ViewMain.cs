@@ -336,8 +336,10 @@ namespace FormulaGaussExample
                         MessageBox.Show("Login exitoso", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         tsddbConfiguracion.Visible = true;
                         tsddbMenu.Visible = true;
-                    } else if(userMaster)
+                    }
+                    else if (userMaster)
                     {
+
                         MessageBox.Show("Login exitoso(Usuario Master)", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         tsddbConfiguracion.Visible = true;
                         tsddbMenu.Visible = true;
@@ -568,9 +570,9 @@ namespace FormulaGaussExample
                     calibracionLineal = new CalibracionLineal();
 
                 // Recolectar lecturas raw de las celdas 1 a 4
-                double x1 = manager.Celdas.ContainsKey(1) ? manager.Celdas[0].RawWeight : 0;
-                double x2 = manager.Celdas.ContainsKey(2) ? manager.Celdas[1].RawWeight : 0;
-                double x3 = manager.Celdas.ContainsKey(3) ? manager.Celdas[2].RawWeight : 0;
+                double x1 = manager.Celdas.ContainsKey(1) ? manager.Celdas[1].RawWeight : 0;
+                double x2 = manager.Celdas.ContainsKey(2) ? manager.Celdas[2].RawWeight : 0;
+                double x3 = manager.Celdas.ContainsKey(3) ? manager.Celdas[3].RawWeight : 0;
                 double x4 = manager.Celdas.ContainsKey(4) ? manager.Celdas[4].RawWeight : 0;
 
                 // Mostrar las lecturas actuales y confirmar

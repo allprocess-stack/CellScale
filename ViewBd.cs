@@ -49,11 +49,11 @@ namespace FormulaGaussExample
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 config = new AppConfig
                 {
-                    Servidor = config.Servidor,
-                    BD = config.BD,
-                    Puerto = config.Puerto,
-                    Usuario = config.Usuario,
-                    Contrasena = config.Contrasena
+                    Servidor = "localhost",
+                    BD = "bdCellScale",
+                    Puerto = "3306",
+                    Usuario = "prueba",
+                    Contrasena = "mysqladminWIN11"
                 };
             }
 
