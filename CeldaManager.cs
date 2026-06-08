@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO.Ports;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
@@ -36,6 +37,11 @@ namespace FormulaGaussExample
 
         // Motor de calibración matricial para corrección de excentricidad
         private BalanzaMatricial calibracionMatricial;
+
+        // Campos para compensación de esquinas (excentricidad)
+        private double[] cerosCompensacion = new double[4];
+        private double[] factoresCompensacion = new double[4] { 1.0, 1.0, 1.0, 1.0 };
+        public bool UsarCompensacionEsquinas { get; private set; } = false;
 
         /// <summary>
         /// Obtiene el motor de calibración multivariable activo.
@@ -104,6 +110,7 @@ namespace FormulaGaussExample
         {
             calibracionMultivariable = new CalibracionLineal(m1, m2, m3, m4, b);
             UsarCalibracionMultivariable = true;
+            UsarCompensacionEsquinas = false;
         }
 
         /// <summary>
@@ -137,6 +144,43 @@ namespace FormulaGaussExample
         {
             calibracionMatricial = null;
             UsarCalibracionMatricial = false;
+        }
+
+        /// <summary>
+        /// Configura la compensación de esquinas (excentricidad) con los valores
+        /// de cero y factores calculados.
+        /// Desactiva los otros modos de calibración (multivariable y matricial).
+        /// </summary>
+        public void ConfigurarCompensacionEsquinas(double[] ceros, double[] factores)
+        {
+            if (ceros == null || ceros.Length != 4)
+                throw new ArgumentException("Debe proporcionar 4 valores de cero.");
+            if (factores == null || factores.Length != 4)
+                throw new ArgumentException("Debe proporcionar 4 factores de corrección.");
+
+            cerosCompensacion = (double[])ceros.Clone();
+            factoresCompensacion = (double[])factores.Clone();
+            UsarCompensacionEsquinas = true;
+            UsarCalibracionMultivariable = false;
+            UsarCalibracionMatricial = false;
+        }
+
+        /// <summary>
+        /// Desactiva la compensación de esquinas y vuelve al modo simple.
+        /// </summary>
+        public void DesactivarCompensacionEsquinas()
+        {
+            UsarCompensacionEsquinas = false;
+        }
+
+        public double[] ObtenerCerosCompensacion()
+        {
+            return (double[])cerosCompensacion.Clone();
+        }
+
+        public double[] ObtenerFactoresCompensacion()
+        {
+            return (double[])factoresCompensacion.Clone();
         }
 
         /// <summary>
@@ -331,8 +375,8 @@ namespace FormulaGaussExample
                 {
                     comandoEnProgreso = true;
 
-                    // Formato según protocolo HBM: S01;MSV?;\
-                    string comandoCompleto = $"S{direccion:D2};{comando};\\\r\n";
+                    // Formato clásico HBM: S01;MSV?;
+                    string comandoCompleto = $"S{direccion:D2};{comando};\r\n";
 
                     // Esperar a que el bus esté libre antes de enviar
                     Thread.Sleep(100);
@@ -509,10 +553,11 @@ namespace FormulaGaussExample
 
             try
             {
-                double x1 = Celdas.ContainsKey(1) ? Celdas[1].RawWeight : 0;
-                double x2 = Celdas.ContainsKey(2) ? Celdas[2].RawWeight : 0;
-                double x3 = Celdas.ContainsKey(3) ? Celdas[3].RawWeight : 0;
-                double x4 = Celdas.ContainsKey(4) ? Celdas[4].RawWeight : 0;
+                var celdas = ObtenerCeldasOrdenadas();
+                double x1 = celdas.Count > 0 ? celdas[0].RawWeight : 0;
+                double x2 = celdas.Count > 1 ? celdas[1].RawWeight : 0;
+                double x3 = celdas.Count > 2 ? celdas[2].RawWeight : 0;
+                double x4 = celdas.Count > 3 ? celdas[3].RawWeight : 0;
 
                 return calibracionMultivariable.PesoCalculado(x1, x2, x3, x4);
             }
@@ -637,16 +682,39 @@ namespace FormulaGaussExample
         /// En modo simple: suma los pesos calibrados de todas las celdas conectadas.
         /// </summary>
         /// <returns>Peso total del sistema en kg.</returns>
+        private List<CeldaInfo> ObtenerCeldasOrdenadas()
+        {
+            return Celdas.Values
+                .Where(c => c.Connected)
+                .OrderBy(c => c.SlaveNumber)
+                .Take(4)
+                .ToList();
+        }
+
         public double ObtenerPesoUnificado()
         {
+            var celdasOrdenadas = ObtenerCeldasOrdenadas();
+
+            // Usar compensación de esquinas si está activa (tiene prioridad)
+            if (UsarCompensacionEsquinas)
+            {
+                double peso = 0;
+                for (int i = 0; i < 4 && i < celdasOrdenadas.Count; i++)
+                {
+                    double raw = celdasOrdenadas[i].RawWeight;
+                    double neto = raw - cerosCompensacion[i];
+                    peso += neto * factoresCompensacion[i];
+                }
+                return peso;
+            }
+
             // Usar modelo matricial si está activo (corrección de excentricidad)
             if (UsarCalibracionMatricial && calibracionMatricial != null && calibracionMatricial.EstaCalibrado)
             {
                 double[] lecturas = new double[4];
-                int[] direcciones = { 1, 2, 3, 4 };
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 4 && i < celdasOrdenadas.Count; i++)
                 {
-                    lecturas[i] = Celdas.ContainsKey(direcciones[i]) ? Celdas[direcciones[i]].CalibratedWeight : 0;
+                    lecturas[i] = celdasOrdenadas[i].CalibratedWeight;
                 }
                 return calibracionMatricial.ObtenerPesoCorregido(lecturas);
             }

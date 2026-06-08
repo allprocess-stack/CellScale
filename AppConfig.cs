@@ -56,5 +56,16 @@ namespace FormulaGaussExample
 
         /// <summary>Indica si la calibración multivariable está activa.</summary>
         public bool CalibracionMultivariableActiva { get; set; }
+
+        // --- Compensación de esquinas (excentricidad) ---
+
+        /// <summary>Valores de cero para compensación de esquinas (Z1..Z4).</summary>
+        public double[] CerosCompensacion { get; set; }
+
+        /// <summary>Factores de corrección para compensación de esquinas (F1..F4).</summary>
+        public double[] FactoresCompensacion { get; set; }
+
+        /// <summary>Indica si la compensación de esquinas está activa.</summary>
+        public bool CompensacionEsquinasActiva { get; set; }
     }
 }
