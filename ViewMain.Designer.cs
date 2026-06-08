@@ -54,6 +54,7 @@
             this.tsmiCerrarCalibracion = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGuardarConfiguracion = new System.Windows.Forms.ToolStripMenuItem();
             this.tsbBd = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslblStatusConexion = new System.Windows.Forms.ToolStripStatusLabel();
@@ -106,7 +107,8 @@
             this.tsddbtnLogin,
             this.tsddbMenu,
             this.tsddbConfiguracion,
-            this.tsbBd});
+            this.tsbBd,
+            this.toolStripButton1});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(645, 25);
@@ -209,8 +211,6 @@
             // 
             this.tsmiSlave.Name = "tsmiSlave";
             this.tsmiSlave.Size = new System.Drawing.Size(193, 22);
-            this.tsmiSlave.Text = "Seleccionar Celda";
-            this.tsmiSlave.Click += new System.EventHandler(this.tsmiSlave_Click);
             // 
             // tsmiGuardarMenu
             // 
@@ -275,6 +275,16 @@
             this.tsbBd.Size = new System.Drawing.Size(26, 22);
             this.tsbBd.Text = "BD";
             this.tsbBd.Click += new System.EventHandler(this.tsbBd_Click);
+            // 
+            // toolStripButton1
+            // 
+            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(99, 22);
+            this.toolStripButton1.Text = "CELDAS CONFIG";
+            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
             // statusStrip1
             // 
@@ -345,7 +355,7 @@
             this.lstCeldas.FormattingEnabled = true;
             this.lstCeldas.ItemHeight = 16;
             this.lstCeldas.Location = new System.Drawing.Point(11, 370);
-            this.lstCeldas.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.lstCeldas.Margin = new System.Windows.Forms.Padding(2);
             this.lstCeldas.Name = "lstCeldas";
             this.lstCeldas.Size = new System.Drawing.Size(622, 132);
             this.lstCeldas.TabIndex = 9;
@@ -416,6 +426,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiSlave;
         private System.Windows.Forms.Timer TimerPesaje;
         private System.Windows.Forms.ToolStripButton tsbBd;
+        private System.Windows.Forms.ToolStripButton toolStripButton1;
     }
 }
 

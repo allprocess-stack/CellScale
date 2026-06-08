@@ -61,8 +61,8 @@ namespace FormulaGaussExample
             InitializeComponent();
 
             // Ocultar menús hasta que el usuario inicie sesión
-            tsddbMenu.Visible = false;
-            tsddbConfiguracion.Visible = false;
+            //tsddbMenu.Visible = false;
+            //tsddbConfiguracion.Visible = false;
 
             // Cargar configuración desde config.json
             config = ConfigManager.CargarConfig();
@@ -155,21 +155,6 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Carga las direcciones esclavo disponibles (1 a 15) en el combobox
-        /// de selección de celda. La dirección 0 no se usa según el protocolo.
-        /// </summary>
-        //private void CargarSlaveNumbers()
-        //{
-        //    tscbSlave.Items.Clear();
-        //    for (int i = 1; i <= 15; i++)
-        //    {
-        //        tscbSlave.Items.Add(i.ToString("D2"));
-        //    }
-        //    if (tscbSlave.Items.Count > 0)
-        //        tscbSlave.SelectedIndex = 0;
-        //}
-
-        /// <summary>
         /// Carga los factores de calibración (modo simple) guardados en la configuración
         /// hacia el manager de celdas.
         /// Si existe calibración multivariable activa, carga los coeficientes m1..m4, B.
@@ -216,6 +201,18 @@ namespace FormulaGaussExample
                 }
 
                 Console.WriteLine("Calibración multivariable cargada desde configuración.");
+            }
+
+            // Cargar compensación de esquinas si está activa en la configuración
+            if (config.CompensacionEsquinasActiva &&
+                config.CerosCompensacion != null && config.CerosCompensacion.Length == 4 &&
+                config.FactoresCompensacion != null && config.FactoresCompensacion.Length == 4)
+            {
+                if (manager != null)
+                {
+                    manager.ConfigurarCompensacionEsquinas(config.CerosCompensacion, config.FactoresCompensacion);
+                    Console.WriteLine("Compensación de esquinas cargada desde configuración.");
+                }
             }
         }
 
@@ -334,13 +331,15 @@ namespace FormulaGaussExample
                     if (reader.Read())
                     {
                         MessageBox.Show("Login exitoso", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        tsddbConfiguracion.Visible = true;
-                        tsddbMenu.Visible = true;
-                    } else if(userMaster)
+                        //tsddbConfiguracion.Visible = true;
+                        //tsddbMenu.Visible = true;
+                    }
+                    else if (userMaster)
                     {
+
                         MessageBox.Show("Login exitoso(Usuario Master)", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        tsddbConfiguracion.Visible = true;
-                        tsddbMenu.Visible = true;
+                        //tsddbConfiguracion.Visible = true;
+                        //tsddbMenu.Visible = true;
                     }
                     else
                     {
@@ -488,6 +487,15 @@ namespace FormulaGaussExample
 
                 Console.WriteLine("Calibración multivariable cargada al manager.");
             }
+
+            // Cargar compensación de esquinas si está activa
+            if (config.CompensacionEsquinasActiva &&
+                config.CerosCompensacion != null && config.CerosCompensacion.Length == 4 &&
+                config.FactoresCompensacion != null && config.FactoresCompensacion.Length == 4)
+            {
+                manager.ConfigurarCompensacionEsquinas(config.CerosCompensacion, config.FactoresCompensacion);
+                Console.WriteLine("Compensación de esquinas cargada al manager.");
+            }
         }
 
         /// <summary>
@@ -544,43 +552,49 @@ namespace FormulaGaussExample
                 }
 
                 // Verificar que haya al menos 4 celdas conectadas
-                if (manager.Celdas.Count < 4)
-                {
-                    if (manager.Celdas.Count == 0)
-                    {
-                        MessageBox.Show("No hay celdas conectadas para calibrar.\nConecte la balanza primero.",
-                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                //if (manager.Celdas.Count < 4)
+                //{
+                //    if (manager.Celdas.Count == 0)
+                //    {
+                //        MessageBox.Show("No hay celdas conectadas para calibrar.\nConecte la balanza primero.",
+                //            "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //        return;
+                //    }
 
-                    // Permitir continuar con las celdas disponibles
-                    DialogResult dr = MessageBox.Show(
-                        $"Solo se detectaron {manager.Celdas.Count} celda(s).\n" +
-                        $"¿Desea calibrar con las celdas disponibles?",
-                        "Celdas insuficientes", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                //    // Permitir continuar con las celdas disponibles
+                //    DialogResult dr = MessageBox.Show(
+                //        $"Solo se detectaron {manager.Celdas.Count} celda(s).\n" +
+                //        $"¿Desea calibrar con las celdas disponibles?",
+                //        "Celdas insuficientes", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-                    if (dr == DialogResult.No)
-                        return;
-                }
+                //    if (dr == DialogResult.No)
+                //        return;
+                //}
 
                 // Crear o inicializar el recolector de puntos de calibración
                 if (calibracionLineal == null)
                     calibracionLineal = new CalibracionLineal();
 
-                // Recolectar lecturas raw de las celdas 1 a 4
-                double x1 = manager.Celdas.ContainsKey(1) ? manager.Celdas[1].RawWeight : 0;
-                double x2 = manager.Celdas.ContainsKey(2) ? manager.Celdas[2].RawWeight : 0;
-                double x3 = manager.Celdas.ContainsKey(3) ? manager.Celdas[3].RawWeight : 0;
-                double x4 = manager.Celdas.ContainsKey(4) ? manager.Celdas[4].RawWeight : 0;
+                // Obtener celdas conectadas ordenadas por SlaveNumber
+                var celdas = manager.Celdas.Values
+                    .Where(c => c.Connected)
+                    .OrderBy(c => c.SlaveNumber)
+                    .ToList();
+
+                // Recolectar lecturas raw de las celdas (hasta 4)
+                double x1 = celdas.Count > 0 ? celdas[0].RawWeight : 0;
+                double x2 = celdas.Count > 1 ? celdas[1].RawWeight : 0;
+                double x3 = celdas.Count > 2 ? celdas[2].RawWeight : 0;
+                double x4 = celdas.Count > 3 ? celdas[3].RawWeight : 0;
 
                 // Mostrar las lecturas actuales y confirmar
                 string mensajePunto =
-                    $"Punto de calibración #{PuntosCalibracion.Count + 1}:\n\n" +
+                    $"Punto de calibración #{PuntosCalibracion.Count}:\n\n" +
                     $"Peso conocido: {pesoConocido} kg\n" +
-                    $"Celda 1 (raw): {x1}\n" +
-                    $"Celda 2 (raw): {x2}\n" +
-                    $"Celda 3 (raw): {x3}\n" +
-                    $"Celda 4 (raw): {x4}\n\n" +
+                    $"Celda {(celdas.Count > 0 ? celdas[0].SlaveNumber.ToString() : "?")} (raw): {x1}\n" +
+                    $"Celda {(celdas.Count > 1 ? celdas[1].SlaveNumber.ToString() : "?")} (raw): {x2}\n" +
+                    $"Celda {(celdas.Count > 2 ? celdas[2].SlaveNumber.ToString() : "?")} (raw): {x3}\n" +
+                    $"Celda {(celdas.Count > 3 ? celdas[3].SlaveNumber.ToString() : "?")} (raw): {x4}\n\n" +
                     $"¿Agregar este punto y continuar?";
 
                 DialogResult resultado = MessageBox.Show(mensajePunto, "Registrar punto de calibración",
@@ -663,31 +677,6 @@ namespace FormulaGaussExample
 
         // Lista estática para acumular puntos de calibración durante la sesión
         private List<PuntoCalibracion> PuntosCalibracion = new List<PuntoCalibracion>();
-
-        /// <summary>
-        /// Consulta los pesos de todas las celdas conectadas (1 a 15)
-        /// y actualiza la UI con el peso unificado.
-        /// Método utilitario para depuración y consultas manuales.
-        /// </summary>
-        private void ConsultarTodasCeldas()
-        {
-            if (manager != null && manager.IsOpen)
-            {
-                for (int i = 1; i <= 15; i++)
-                {
-                    if (manager.VerificarComunicacion(i))
-                    {
-                        double peso = manager.ConsultarPeso(i);
-                        System.Diagnostics.Debug.WriteLine($"Celda #{i:D2}: {peso:F2} kg");
-                    }
-                }
-
-                double pesoUnificado = manager.ObtenerPesoUnificado();
-                txtBalanza.Text = pesoUnificado.ToString("F2");
-                //lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
-            }
-        }
-
         /// <summary>
         /// Actualiza el ListBox de celdas con las celdas conectadas actualmente.
         /// </summary>
@@ -889,34 +878,19 @@ namespace FormulaGaussExample
             ultimaTramaRecibida = false;
         }
 
-        /// <summary>
-        /// Maneja el cambio de selección en el combobox de direcciones esclavo.
-        /// Actualiza la celda activa y consulta su peso si la balanza está conectada.
-        /// </summary>
-        //private void tscbSlave_SelectedIndexChanged(object sender, EventArgs e)
-        //{
-        //    if (int.TryParse(tscbSlave.Text, out int slave))
-        //    {
-        //        celdaSeleccionada = slave;
-        //        lblCeldaActiva.Text = $"Celda activa: #{slave:D2}";
-
-        //        if (manager != null && manager.IsOpen)
-        //        {
-        //            double peso = manager.ConsultarPeso(slave);
-        //            lblPesoIndividual.Text = $"Celda #{slave:D2}: {peso:F2} kg";
-        //        }
-        //    }
-        //}
-
         // --- Event handlers requeridos por el diseñador (aunque estén vacíos) ---
 
         private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e) { }
         private void toolStripDropDownButton1_Click(object sender, EventArgs e) { }
         private void label1_Click(object sender, EventArgs e) { }
 
-        // MODIFICADO: Al abrir Vista Celdas, se pasa el manager de celdas para que
-        //             el formulario hijo pueda acceder a las celdas conectadas.
-        private void tsmiSlave_Click(object sender, EventArgs e)
+
+        private void tsbBd_Click(object sender, EventArgs e)
+        {
+            new ViewBd().Show();
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
         {
             if (manager == null)
             {
@@ -925,11 +899,6 @@ namespace FormulaGaussExample
                 return;
             }
             new ViewCeldas(manager, conexion).Show();
-        }
-
-        private void tsbBd_Click(object sender, EventArgs e)
-        {
-            new ViewBd().Show();
         }
     }
 }
