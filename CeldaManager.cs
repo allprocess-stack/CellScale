@@ -378,13 +378,11 @@ namespace FormulaGaussExample
                     // Formato clásico HBM: S01;MSV?;
                     string comandoCompleto = $"S{direccion:D2};{comando};\r\n";
 
-                    // Esperar a que el bus esté libre antes de enviar
-                    Thread.Sleep(100);
                     puerto.DiscardInBuffer();
                     puerto.Write(comandoCompleto);
 
                     // Esperar la respuesta de la celda
-                    Thread.Sleep(200);
+                    Thread.Sleep(50);
                     string respuesta = puerto.ReadExisting();
                     string limpia = LimpiarTrama(respuesta);
 
@@ -426,19 +424,16 @@ namespace FormulaGaussExample
                 {
                     comandoEnProgreso = true;
 
-                    Thread.Sleep(100);
                     puerto.DiscardInBuffer();
                     puerto.Write($"S98\r\n");
 
-                    Thread.Sleep(100);
                     puerto.DiscardInBuffer();
                     puerto.Write($"MSV?\r\n");
 
-                    Thread.Sleep(100);
                     puerto.DiscardInBuffer();
                     puerto.Write($"S{direccion:D2}\r\n");
 
-                    Thread.Sleep(300);
+                    Thread.Sleep(50);
                     string respuesta = puerto.ReadExisting();
                     limpia = LimpiarTrama(respuesta);
                     rawWeight = ExtraerPesoHBM(limpia);
