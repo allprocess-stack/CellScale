@@ -639,8 +639,8 @@ namespace FormulaGaussExample
         {
             var celdasDetectadas = new List<CeldaInfo>();
 
-            // Escanear direcciones de 1 a 15 (la dirección 0 no se usa según el protocolo)
-            for (int addr = 1; addr <= 15; addr++)
+            // Escanear direcciones de 0 a 15 (el simulador usa S00 como primera celda)
+            for (int addr = 0; addr <= 15; addr++)
             {
                 string respuesta = ConsultarSerie(addr);
 

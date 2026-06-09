@@ -183,33 +183,33 @@
             // txtConsultCelda1
             // 
             this.txtConsultCelda1.Location = new System.Drawing.Point(35, 93);
-            this.txtConsultCelda1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtConsultCelda1.Margin = new System.Windows.Forms.Padding(2);
             this.txtConsultCelda1.Name = "txtConsultCelda1";
-            this.txtConsultCelda1.Size = new System.Drawing.Size(76, 20);
+            this.txtConsultCelda1.Size = new System.Drawing.Size(76, 22);
             this.txtConsultCelda1.TabIndex = 15;
             // 
             // txtConsultCelda2
             // 
             this.txtConsultCelda2.Location = new System.Drawing.Point(153, 93);
-            this.txtConsultCelda2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtConsultCelda2.Margin = new System.Windows.Forms.Padding(2);
             this.txtConsultCelda2.Name = "txtConsultCelda2";
-            this.txtConsultCelda2.Size = new System.Drawing.Size(76, 20);
+            this.txtConsultCelda2.Size = new System.Drawing.Size(76, 22);
             this.txtConsultCelda2.TabIndex = 16;
             // 
             // txtConsultCelda3
             // 
             this.txtConsultCelda3.Location = new System.Drawing.Point(261, 93);
-            this.txtConsultCelda3.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtConsultCelda3.Margin = new System.Windows.Forms.Padding(2);
             this.txtConsultCelda3.Name = "txtConsultCelda3";
-            this.txtConsultCelda3.Size = new System.Drawing.Size(76, 20);
+            this.txtConsultCelda3.Size = new System.Drawing.Size(76, 22);
             this.txtConsultCelda3.TabIndex = 17;
             // 
             // txtConsultCelda4
             // 
             this.txtConsultCelda4.Location = new System.Drawing.Point(373, 93);
-            this.txtConsultCelda4.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtConsultCelda4.Margin = new System.Windows.Forms.Padding(2);
             this.txtConsultCelda4.Name = "txtConsultCelda4";
-            this.txtConsultCelda4.Size = new System.Drawing.Size(76, 20);
+            this.txtConsultCelda4.Size = new System.Drawing.Size(76, 22);
             this.txtConsultCelda4.TabIndex = 18;
             // 
             // contextMenuStrip1
@@ -226,7 +226,7 @@
             this.lblTituloCalibracion.Location = new System.Drawing.Point(15, 25);
             this.lblTituloCalibracion.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTituloCalibracion.Name = "lblTituloCalibracion";
-            this.lblTituloCalibracion.Size = new System.Drawing.Size(264, 15);
+            this.lblTituloCalibracion.Size = new System.Drawing.Size(308, 18);
             this.lblTituloCalibracion.TabIndex = 19;
             this.lblTituloCalibracion.Text = "Calibración de Esquinas (Excentricidad)";
             // 
@@ -236,24 +236,24 @@
             this.lblPesoCalibracion.Location = new System.Drawing.Point(21, 54);
             this.lblPesoCalibracion.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblPesoCalibracion.Name = "lblPesoCalibracion";
-            this.lblPesoCalibracion.Size = new System.Drawing.Size(110, 13);
+            this.lblPesoCalibracion.Size = new System.Drawing.Size(139, 16);
             this.lblPesoCalibracion.TabIndex = 20;
             this.lblPesoCalibracion.Text = "Peso Calibración (kg):";
             // 
             // txtPesoCalibracion
             // 
-            this.txtPesoCalibracion.Location = new System.Drawing.Point(123, 51);
-            this.txtPesoCalibracion.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtPesoCalibracion.Location = new System.Drawing.Point(164, 51);
+            this.txtPesoCalibracion.Margin = new System.Windows.Forms.Padding(2);
             this.txtPesoCalibracion.Name = "txtPesoCalibracion";
-            this.txtPesoCalibracion.Size = new System.Drawing.Size(61, 20);
+            this.txtPesoCalibracion.Size = new System.Drawing.Size(61, 22);
             this.txtPesoCalibracion.TabIndex = 21;
             this.txtPesoCalibracion.Text = "100";
             this.txtPesoCalibracion.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // btnCeroCalibracion
             // 
-            this.btnCeroCalibracion.Location = new System.Drawing.Point(201, 50);
-            this.btnCeroCalibracion.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnCeroCalibracion.Location = new System.Drawing.Point(321, 51);
+            this.btnCeroCalibracion.Margin = new System.Windows.Forms.Padding(2);
             this.btnCeroCalibracion.Name = "btnCeroCalibracion";
             this.btnCeroCalibracion.Size = new System.Drawing.Size(105, 23);
             this.btnCeroCalibracion.TabIndex = 22;
@@ -264,7 +264,7 @@
             // btnEsquina1
             // 
             this.btnEsquina1.Location = new System.Drawing.Point(21, 82);
-            this.btnEsquina1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnEsquina1.Margin = new System.Windows.Forms.Padding(2);
             this.btnEsquina1.Name = "btnEsquina1";
             this.btnEsquina1.Size = new System.Drawing.Size(90, 24);
             this.btnEsquina1.TabIndex = 23;
@@ -275,7 +275,7 @@
             // btnEsquina2
             // 
             this.btnEsquina2.Location = new System.Drawing.Point(126, 82);
-            this.btnEsquina2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnEsquina2.Margin = new System.Windows.Forms.Padding(2);
             this.btnEsquina2.Name = "btnEsquina2";
             this.btnEsquina2.Size = new System.Drawing.Size(90, 24);
             this.btnEsquina2.TabIndex = 24;
@@ -286,7 +286,7 @@
             // btnEsquina3
             // 
             this.btnEsquina3.Location = new System.Drawing.Point(231, 82);
-            this.btnEsquina3.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnEsquina3.Margin = new System.Windows.Forms.Padding(2);
             this.btnEsquina3.Name = "btnEsquina3";
             this.btnEsquina3.Size = new System.Drawing.Size(90, 24);
             this.btnEsquina3.TabIndex = 25;
@@ -297,7 +297,7 @@
             // btnEsquina4
             // 
             this.btnEsquina4.Location = new System.Drawing.Point(336, 82);
-            this.btnEsquina4.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnEsquina4.Margin = new System.Windows.Forms.Padding(2);
             this.btnEsquina4.Name = "btnEsquina4";
             this.btnEsquina4.Size = new System.Drawing.Size(90, 24);
             this.btnEsquina4.TabIndex = 26;
@@ -309,8 +309,8 @@
             // 
             this.btnAplicarGauss.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
             this.btnAplicarGauss.Enabled = false;
-            this.btnAplicarGauss.Location = new System.Drawing.Point(23, 253);
-            this.btnAplicarGauss.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnAplicarGauss.Location = new System.Drawing.Point(21, 264);
+            this.btnAplicarGauss.Margin = new System.Windows.Forms.Padding(2);
             this.btnAplicarGauss.Name = "btnAplicarGauss";
             this.btnAplicarGauss.Size = new System.Drawing.Size(150, 24);
             this.btnAplicarGauss.TabIndex = 32;
@@ -321,7 +321,7 @@
             // btnCapturarPuntoGauss
             // 
             this.btnCapturarPuntoGauss.Location = new System.Drawing.Point(23, 192);
-            this.btnCapturarPuntoGauss.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnCapturarPuntoGauss.Margin = new System.Windows.Forms.Padding(2);
             this.btnCapturarPuntoGauss.Name = "btnCapturarPuntoGauss";
             this.btnCapturarPuntoGauss.Size = new System.Drawing.Size(135, 24);
             this.btnCapturarPuntoGauss.TabIndex = 30;
@@ -332,10 +332,10 @@
             // 
             this.lblCoefGauss.AutoSize = true;
             this.lblCoefGauss.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCoefGauss.Location = new System.Drawing.Point(21, 224);
+            this.lblCoefGauss.Location = new System.Drawing.Point(21, 240);
             this.lblCoefGauss.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblCoefGauss.Name = "lblCoefGauss";
-            this.lblCoefGauss.Size = new System.Drawing.Size(175, 13);
+            this.lblCoefGauss.Size = new System.Drawing.Size(232, 17);
             this.lblCoefGauss.TabIndex = 31;
             this.lblCoefGauss.Text = "Coeficientes: (pendiente...)";
             // 
@@ -346,7 +346,7 @@
             this.lblTituloGauss.Location = new System.Drawing.Point(15, 151);
             this.lblTituloGauss.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTituloGauss.Name = "lblTituloGauss";
-            this.lblTituloGauss.Size = new System.Drawing.Size(292, 15);
+            this.lblTituloGauss.Size = new System.Drawing.Size(343, 18);
             this.lblTituloGauss.TabIndex = 28;
             this.lblTituloGauss.Text = "Calibración Multivariable (Gauss — 5 puntos)";
             // 
@@ -357,7 +357,7 @@
             this.lblPuntosGauss.Location = new System.Drawing.Point(21, 174);
             this.lblPuntosGauss.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblPuntosGauss.Name = "lblPuntosGauss";
-            this.lblPuntosGauss.Size = new System.Drawing.Size(74, 13);
+            this.lblPuntosGauss.Size = new System.Drawing.Size(91, 17);
             this.lblPuntosGauss.TabIndex = 29;
             this.lblPuntosGauss.Text = "Puntos: 0/5";
             // 
@@ -367,7 +367,7 @@
             this.lblEstadoCalibracion.Location = new System.Drawing.Point(21, 117);
             this.lblEstadoCalibracion.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblEstadoCalibracion.Name = "lblEstadoCalibracion";
-            this.lblEstadoCalibracion.Size = new System.Drawing.Size(406, 13);
+            this.lblEstadoCalibracion.Size = new System.Drawing.Size(509, 16);
             this.lblEstadoCalibracion.TabIndex = 27;
             this.lblEstadoCalibracion.Text = "Estado: Configure el peso de calibración y presione \"Capturar Cero\" (balanza vací" +
     "a).";
@@ -388,9 +388,9 @@
             this.groupBox1.Controls.Add(this.btnEsquina3);
             this.groupBox1.Controls.Add(this.lblEstadoCalibracion);
             this.groupBox1.Controls.Add(this.btnEsquina4);
-            this.groupBox1.Location = new System.Drawing.Point(12, 12);
+            this.groupBox1.Location = new System.Drawing.Point(12, 31);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(459, 285);
+            this.groupBox1.Size = new System.Drawing.Size(609, 302);
             this.groupBox1.TabIndex = 33;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Calibraciones";
@@ -399,7 +399,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(483, 307);
+            this.ClientSize = new System.Drawing.Size(633, 345);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.txtConsultCelda4);
             this.Controls.Add(this.txtConsultCelda3);

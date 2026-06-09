@@ -176,33 +176,6 @@ namespace FormulaGaussExample
                 }
             }
 
-            // Cargar calibración multivariable si está activa en la configuración
-            if (config.CalibracionMultivariableActiva &&
-                config.CoeficienteM1 != 0 && config.CoeficienteM2 != 0 &&
-                config.CoeficienteM3 != 0 && config.CoeficienteM4 != 0)
-            {
-                calibracionLineal = new CalibracionLineal(
-                    config.CoeficienteM1,
-                    config.CoeficienteM2,
-                    config.CoeficienteM3,
-                    config.CoeficienteM4,
-                    config.BiasB
-                );
-
-                if (manager != null)
-                {
-                    manager.ConfigurarCalibracionMultivariable(
-                        config.CoeficienteM1,
-                        config.CoeficienteM2,
-                        config.CoeficienteM3,
-                        config.CoeficienteM4,
-                        config.BiasB
-                    );
-                }
-
-                Console.WriteLine("Calibración multivariable cargada desde configuración.");
-            }
-
             // Cargar compensación de esquinas si está activa en la configuración
             if (config.CompensacionEsquinasActiva &&
                 config.CerosCompensacion != null && config.CerosCompensacion.Length == 4 &&
@@ -630,26 +603,13 @@ namespace FormulaGaussExample
 
                 if (exito)
                 {
-                    // Guardar coeficientes en la configuración
-                    config.CoeficienteM1 = calibracionLineal.Coeficientes[0];
-                    config.CoeficienteM2 = calibracionLineal.Coeficientes[1];
-                    config.CoeficienteM3 = calibracionLineal.Coeficientes[2];
-                    config.CoeficienteM4 = calibracionLineal.Coeficientes[3];
-                    config.BiasB = calibracionLineal.Bias;
-                    config.CalibracionMultivariableActiva = true;
-
-                    // Limpiar factores de calibración simple para evitar confusión
-                    config.FactoresCalibracion?.Clear();
-
-                    ConfigManager.GuardarConfig(config);
-
-                    // Aplicar al manager
+                    // Aplicar al manager en memoria
                     manager.ConfigurarCalibracionMultivariable(
-                        config.CoeficienteM1,
-                        config.CoeficienteM2,
-                        config.CoeficienteM3,
-                        config.CoeficienteM4,
-                        config.BiasB
+                        calibracionLineal.Coeficientes[0],
+                        calibracionLineal.Coeficientes[1],
+                        calibracionLineal.Coeficientes[2],
+                        calibracionLineal.Coeficientes[3],
+                        calibracionLineal.Bias
                     );
 
                     // Mostrar informe completo de calibración
@@ -697,7 +657,7 @@ namespace FormulaGaussExample
         /// la balanza está conectada. Consulta una celda distinta cada tick
         /// (round-robin) para registrar la medición de todas las celdas.
         /// </summary>
-        private void TimerPesaje_Tick(object sender, EventArgs e)
+        private async void TimerPesaje_Tick(object sender, EventArgs e)
         {
             if (manager != null && manager.IsOpen)
             {
@@ -710,7 +670,7 @@ namespace FormulaGaussExample
                 {
                     int idx = indiceConsulta % celdasConectadas.Count;
                     var celda = celdasConectadas[idx];
-                    manager.ConsultarPeso(celda.SlaveNumber);
+                    await Task.Run(() => manager.ConsultarPeso(celda.SlaveNumber));
                     indiceConsulta++;
                 }
 
@@ -718,16 +678,6 @@ namespace FormulaGaussExample
                 double pesoUnificado = manager.ObtenerPesoUnificado();
                 txtBalanza.Text = pesoUnificado.ToString("F2");
                 ultimoPesoCalibrado = pesoUnificado;
-                //lblPesoUnificado.Text = $"Peso Total: {pesoUnificado:F2} kg";
-
-                // Mostrar celda activa seleccionada
-                //if (celdaSeleccionada >= 1 && celdaSeleccionada <= 15)
-                //{
-                //    if (manager.Celdas.ContainsKey(celdaSeleccionada))
-                //    {
-                //        lblPesoIndividual.Text = $"Celda #{celdaSeleccionada:D2}: {manager.Celdas[celdaSeleccionada].CalibratedWeight:F2} kg";
-                //    }
-                //}
             }
         }
 

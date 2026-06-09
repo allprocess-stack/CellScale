@@ -156,11 +156,19 @@ namespace FormulaGaussExample
                     lbl.Text = $"Celda #{celda.SlaveNumber:D2}";
                     lbl.ForeColor = SystemColors.ControlText;
 
-                    double peso = celda.CalibratedWeight;
-                    if (usarCompensacionEsquinas && i < 4)
+                    double peso;
+                    if (manager.UsarCalibracionMultivariable)
+                    {
+                        peso = manager.ObtenerPesoUnificado();
+                    }
+                    else if (usarCompensacionEsquinas && i < 4)
                     {
                         double neto = celda.CalibratedWeight - ceros[i];
                         peso = neto * factores[i];
+                    }
+                    else
+                    {
+                        peso = celda.CalibratedWeight;
                     }
                     txt.Text = $"{peso:F2} kg";
                     txt.Enabled = true;
@@ -705,28 +713,16 @@ namespace FormulaGaussExample
                 double m4 = calibracionGauss.Coeficientes[3];
                 double b = calibracionGauss.Bias;
 
-                // 1. Guardar en config.json
-                var config = ConfigManager.CargarConfig() ?? new AppConfig();
-                config.CoeficienteM1 = m1;
-                config.CoeficienteM2 = m2;
-                config.CoeficienteM3 = m3;
-                config.CoeficienteM4 = m4;
-                config.BiasB = b;
-                config.CalibracionMultivariableActiva = true;
-                config.CompensacionEsquinasActiva = false;
-                config.FactoresCalibracion?.Clear();
-                ConfigManager.GuardarConfig(config);
-
-                // 2. Activar en CeldaManager para que ViewMain lo use en tiempo real
+                // Activar en CeldaManager para que ViewMain lo use en tiempo real
                 manager.ConfigurarCalibracionMultivariable(m1, m2, m3, m4, b);
 
-                // 3. Notificar al usuario
+                // Notificar al usuario
                 lblCoefGauss.Text = $"APLICADO — m1={m1:F6} m2={m2:F6} m3={m3:F6} m4={m4:F6} B={b:F6}";
                 btnAplicarGauss.Enabled = false;
                 btnAplicarGauss.Text = "✓ Calibración Activa";
 
                 MessageBox.Show(
-                    "Coeficientes guardados en config.json y aplicados al sistema.\n\n" +
+                    "Coeficientes aplicados al sistema.\n\n" +
                     "txtBalanza en ViewMain ahora refleja el peso calibrado en tiempo real.\n\n" +
                     $"Ecuación: PESO = X1·{m1:F6} + X2·{m2:F6} + X3·{m3:F6} + X4·{m4:F6} + ({b:F6})",
                     "Calibración Gauss Aplicada", MessageBoxButtons.OK, MessageBoxIcon.Information);
