@@ -48,6 +48,7 @@ namespace FormulaGaussExample
             InicializarConsultTextBoxes();
             InicializarEstadoCalibracion();
             InicializarCalibracionGauss();
+            CargarPesoCalibracionConfig();
         }
 
         private void InicializarEstadoCalibracion()
@@ -99,6 +100,15 @@ namespace FormulaGaussExample
                 ? "Calibración completa"
                 : $"Capturar Punto #{puntoActualGauss + 1}";
             btnCapturarPuntoGauss.Enabled = puntoActualGauss < 5;
+        }
+
+        private void CargarPesoCalibracionConfig()
+        {
+            var config = ConfigManager.CargarConfig();
+            if (config != null && !string.IsNullOrEmpty(config.CalibracionBalanza))
+            {
+                txtPesoCalibracion.Text = config.CalibracionBalanza;
+            }
         }
 
         private void InicializarConsultTextBoxes()
@@ -414,10 +424,7 @@ namespace FormulaGaussExample
                 this.Invoke(new Action(() => ActualizarSlots()));
         }
 
-        // ============================================================
         // Métodos de Calibración de Esquinas (Compensación de Excentricidad)
-        // ============================================================
-
         private async void btnCeroCalibracion_Click(object sender, EventArgs e)
         {
             if (manager == null || !manager.IsOpen)
@@ -602,24 +609,16 @@ namespace FormulaGaussExample
 
             try
             {
-                var celdas = manager.Celdas.Values
-                    .Where(c => c.Connected)
-                    .OrderBy(c => c.SlaveNumber)
-                    .Take(4)
-                    .ToList();
-
-                if (celdas.Count < 4)
-                {
-                    MessageBox.Show($"Se requieren 4 celdas conectadas. Solo hay {celdas.Count}.",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
+                // Leer las 4 direcciones fijas S00, S01, S02, S03 (direcciones 0, 1, 2, 3)
+                int[] direcciones = { 0, 1, 2, 3 };
                 double[] lecturas = new double[4];
                 for (int i = 0; i < 4; i++)
                 {
-                    await Task.Run(() => manager.ConsultarPeso(celdas[i].SlaveNumber));
-                    lecturas[i] = celdas[i].RawWeight;
+                    await Task.Run(() => manager.ConsultarPeso(direcciones[i]));
+                    double raw = 0;
+                    if (manager.Celdas.ContainsKey(direcciones[i]))
+                        raw = manager.Celdas[direcciones[i]].RawWeight;
+                    lecturas[i] = raw;
                 }
 
                 double x1 = lecturas[0], x2 = lecturas[1], x3 = lecturas[2], x4 = lecturas[3];
@@ -759,6 +758,13 @@ namespace FormulaGaussExample
         private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
 
+        }
+
+        private void txtPesoCalibracion_TextChanged(object sender, EventArgs e)
+        {
+            var config = ConfigManager.CargarConfig() ?? new AppConfig();
+            config.CalibracionBalanza = txtPesoCalibracion.Text.Trim();
+            ConfigManager.GuardarConfig(config);
         }
     }
 }

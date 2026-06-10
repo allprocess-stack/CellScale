@@ -63,6 +63,8 @@ namespace FormulaGaussExample
             // Ocultar menús hasta que el usuario inicie sesión
             //tsddbMenu.Visible = false;
             //tsddbConfiguracion.Visible = false;
+            //tsbCeldasConfig.Visible=true;
+            //tsbPesoCeldas.Visible=true;
 
             // Cargar configuración desde config.json
             config = ConfigManager.CargarConfig();
@@ -114,7 +116,7 @@ namespace FormulaGaussExample
 
             if (config != null)
             {
-                tstbCalibracion.Text = config.CalibracionBalanza;
+                //tstbCalibracion.Text = config.CalibracionBalanza;
                 tscbBalanza.Text = config.COMBalanza;
             }
 
@@ -306,6 +308,9 @@ namespace FormulaGaussExample
                         MessageBox.Show("Login exitoso", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         //tsddbConfiguracion.Visible = true;
                         //tsddbMenu.Visible = true;
+                        //tsbCeldasConfig.Visible=true;
+                        //tsbPesoCeldas.Visible=true;
+
                     }
                     else if (userMaster)
                     {
@@ -313,6 +318,8 @@ namespace FormulaGaussExample
                         MessageBox.Show("Login exitoso(Usuario Master)", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         //tsddbConfiguracion.Visible = true;
                         //tsddbMenu.Visible = true;
+                        //tsbCeldasConfig.Visible=true;
+                        //tsbPesoCeldas.Visible=true;
                     }
                     else
                     {
@@ -334,10 +341,11 @@ namespace FormulaGaussExample
             try
             {
                 // Validar que se haya seleccionado un puerto COM
+                string pesoCalibrar = tstbPesoCalibrar.Text;
                 string balanzaCOM = tscbBalanza.Text;
-                if (string.IsNullOrEmpty(balanzaCOM))
+                if (string.IsNullOrEmpty(balanzaCOM) || string.IsNullOrEmpty(pesoCalibrar))
                 {
-                    MessageBox.Show("Seleccione un puerto COM", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Seleccione un puerto COM e ingrese un valor a Calibrar", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -348,6 +356,7 @@ namespace FormulaGaussExample
                 }
                 // Guardar valor de Puerto de balanza
                 config.COMBalanza=balanzaCOM;
+                config.CalibracionBalanza=pesoCalibrar;
                 // Persistir en el archivo config.json
                 ConfigManager.GuardarConfig(config);
                 MessageBox.Show("Configuración Balanza guardada correctamente\n",
@@ -501,138 +510,6 @@ namespace FormulaGaussExample
             MessageBox.Show("Balanza desconectada correctamente.", "Desconexión", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             menu.AutoClose = true;
-        }
-
-        /// <summary>
-        /// Calibra el sistema usando el método multivariable.
-        /// Recopila lecturas raw de las 4 celdas con el peso conocido actual,
-        /// los acumula como puntos de calibración y, al llegar a 5 puntos,
-        /// resuelve el sistema de ecuaciones por eliminación de Gauss.
-        /// 
-        /// Guarda los coeficientes resultantes (m1..m4, B) en config.json
-        /// y activa el modo de calibración multivariable.
-        /// </summary>
-        private void tsmiGuardarConfiguracion_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Validar el peso conocido ingresado
-                if (!double.TryParse(tstbCalibracion.Text.Trim(), out double pesoConocido) || pesoConocido <= 0)
-                {
-                    MessageBox.Show("Ingrese un peso conocido válido para calibrar el sistema", "Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                // Verificar que haya al menos 4 celdas conectadas
-                //if (manager.Celdas.Count < 4)
-                //{
-                //    if (manager.Celdas.Count == 0)
-                //    {
-                //        MessageBox.Show("No hay celdas conectadas para calibrar.\nConecte la balanza primero.",
-                //            "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                //        return;
-                //    }
-
-                //    // Permitir continuar con las celdas disponibles
-                //    DialogResult dr = MessageBox.Show(
-                //        $"Solo se detectaron {manager.Celdas.Count} celda(s).\n" +
-                //        $"¿Desea calibrar con las celdas disponibles?",
-                //        "Celdas insuficientes", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                //    if (dr == DialogResult.No)
-                //        return;
-                //}
-
-                // Crear o inicializar el recolector de puntos de calibración
-                if (calibracionLineal == null)
-                    calibracionLineal = new CalibracionLineal();
-
-                // Obtener celdas conectadas ordenadas por SlaveNumber
-                var celdas = manager.Celdas.Values
-                    .Where(c => c.Connected)
-                    .OrderBy(c => c.SlaveNumber)
-                    .ToList();
-
-                // Recolectar lecturas raw de las celdas (hasta 4)
-                double x1 = celdas.Count > 0 ? celdas[0].RawWeight : 0;
-                double x2 = celdas.Count > 1 ? celdas[1].RawWeight : 0;
-                double x3 = celdas.Count > 2 ? celdas[2].RawWeight : 0;
-                double x4 = celdas.Count > 3 ? celdas[3].RawWeight : 0;
-
-                // Mostrar las lecturas actuales y confirmar
-                string mensajePunto =
-                    $"Punto de calibración #{PuntosCalibracion.Count}:\n\n" +
-                    $"Peso conocido: {pesoConocido} kg\n" +
-                    $"Celda {(celdas.Count > 0 ? celdas[0].SlaveNumber.ToString() : "?")} (raw): {x1}\n" +
-                    $"Celda {(celdas.Count > 1 ? celdas[1].SlaveNumber.ToString() : "?")} (raw): {x2}\n" +
-                    $"Celda {(celdas.Count > 2 ? celdas[2].SlaveNumber.ToString() : "?")} (raw): {x3}\n" +
-                    $"Celda {(celdas.Count > 3 ? celdas[3].SlaveNumber.ToString() : "?")} (raw): {x4}\n\n" +
-                    $"¿Agregar este punto y continuar?";
-
-                DialogResult resultado = MessageBox.Show(mensajePunto, "Registrar punto de calibración",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (resultado == DialogResult.No)
-                    return;
-
-                // Guardar el punto de calibración
-                PuntosCalibracion.Add(new PuntoCalibracion
-                {
-                    X1 = x1,
-                    X2 = x2,
-                    X3 = x3,
-                    X4 = x4,
-                    PesoConocido = pesoConocido
-                });
-
-                int puntosRestantes = 5 - PuntosCalibracion.Count;
-
-                if (puntosRestantes > 0)
-                {
-                    MessageBox.Show(
-                        $"Punto registrado correctamente.\n\n" +
-                        $"Faltan {puntosRestantes} punto(s) para completar la calibración.\n" +
-                        $"Cambie el peso sobre la báscula y presione 'Guardar Configuración' nuevamente.",
-                        "Punto registrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                // Con 5 puntos, resolver el sistema por eliminación de Gauss
-                bool exito = calibracionLineal.Calibrar(PuntosCalibracion);
-
-                if (exito)
-                {
-                    // Aplicar al manager en memoria
-                    manager.ConfigurarCalibracionMultivariable(
-                        calibracionLineal.Coeficientes[0],
-                        calibracionLineal.Coeficientes[1],
-                        calibracionLineal.Coeficientes[2],
-                        calibracionLineal.Coeficientes[3],
-                        calibracionLineal.Bias
-                    );
-
-                    // Mostrar informe completo de calibración
-                    string informe = calibracionLineal.GenerarInforme(PuntosCalibracion);
-                    MessageBox.Show(informe, "Calibración multivariable exitosa",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    // Limpiar puntos para futuras recalibraciones
-                    PuntosCalibracion.Clear();
-
-                    ActualizarListaCeldas();
-                }
-                else
-                {
-                    MessageBox.Show("No se pudo calibrar. Verifique los puntos de calibración.",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al calibrar sistema: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
 
         // Lista estática para acumular puntos de calibración durante la sesión
@@ -849,6 +726,43 @@ namespace FormulaGaussExample
                 return;
             }
             new ViewCeldas(manager, conexion).Show();
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            if (manager == null)
+            {
+                MessageBox.Show("No hay conexión activa con la balanza.\nConecte la balanza primero.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            new ViewWeightCeldas(manager).Show();
+        }
+
+        private void toolStripTextBox3_Click(object sender, EventArgs e)
+        {
+            var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
+            menu.AutoClose = false;
+
+            string pesoCalibrar = tstbPesoCalibrar.Text;
+            if (string.IsNullOrEmpty(pesoCalibrar))
+            {
+                MessageBox.Show("Ingrese un peso para calibrar balanza", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                menu.AutoClose = true;
+                return;
+            }
+
+            menu.AutoClose = true;
+        }
+
+        private void toolStripTextBox4_Click(object sender, EventArgs e)
+        {
+            var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
+            menu.AutoClose = false;
+
+            MessageBox.Show("Peso a calibrar deseleccionado correctamente.", "Desconexión", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            menu.AutoClose = true;
         }
     }
 }
