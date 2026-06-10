@@ -48,6 +48,7 @@ namespace FormulaGaussExample
             InicializarConsultTextBoxes();
             InicializarEstadoCalibracion();
             InicializarCalibracionGauss();
+            CargarPesoCalibracionConfig();
         }
 
         private void InicializarEstadoCalibracion()
@@ -99,6 +100,15 @@ namespace FormulaGaussExample
                 ? "Calibración completa"
                 : $"Capturar Punto #{puntoActualGauss + 1}";
             btnCapturarPuntoGauss.Enabled = puntoActualGauss < 5;
+        }
+
+        private void CargarPesoCalibracionConfig()
+        {
+            var config = ConfigManager.CargarConfig();
+            if (config != null && !string.IsNullOrEmpty(config.CalibracionBalanza))
+            {
+                txtPesoCalibracion.Text = config.CalibracionBalanza;
+            }
         }
 
         private void InicializarConsultTextBoxes()
@@ -156,11 +166,19 @@ namespace FormulaGaussExample
                     lbl.Text = $"Celda #{celda.SlaveNumber:D2}";
                     lbl.ForeColor = SystemColors.ControlText;
 
-                    double peso = celda.CalibratedWeight;
-                    if (usarCompensacionEsquinas && i < 4)
+                    double peso;
+                    if (manager.UsarCalibracionMultivariable)
+                    {
+                        peso = manager.ObtenerPesoUnificado();
+                    }
+                    else if (usarCompensacionEsquinas && i < 4)
                     {
                         double neto = celda.CalibratedWeight - ceros[i];
                         peso = neto * factores[i];
+                    }
+                    else
+                    {
+                        peso = celda.CalibratedWeight;
                     }
                     txt.Text = $"{peso:F2} kg";
                     txt.Enabled = true;
@@ -406,10 +424,7 @@ namespace FormulaGaussExample
                 this.Invoke(new Action(() => ActualizarSlots()));
         }
 
-        // ============================================================
         // Métodos de Calibración de Esquinas (Compensación de Excentricidad)
-        // ============================================================
-
         private async void btnCeroCalibracion_Click(object sender, EventArgs e)
         {
             if (manager == null || !manager.IsOpen)
@@ -594,24 +609,16 @@ namespace FormulaGaussExample
 
             try
             {
-                var celdas = manager.Celdas.Values
-                    .Where(c => c.Connected)
-                    .OrderBy(c => c.SlaveNumber)
-                    .Take(4)
-                    .ToList();
-
-                if (celdas.Count < 4)
-                {
-                    MessageBox.Show($"Se requieren 4 celdas conectadas. Solo hay {celdas.Count}.",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
+                // Leer las 4 direcciones fijas S00, S01, S02, S03 (direcciones 0, 1, 2, 3)
+                int[] direcciones = { 0, 1, 2, 3 };
                 double[] lecturas = new double[4];
                 for (int i = 0; i < 4; i++)
                 {
-                    await Task.Run(() => manager.ConsultarPeso(celdas[i].SlaveNumber));
-                    lecturas[i] = celdas[i].RawWeight;
+                    await Task.Run(() => manager.ConsultarPeso(direcciones[i]));
+                    double raw = 0;
+                    if (manager.Celdas.ContainsKey(direcciones[i]))
+                        raw = manager.Celdas[direcciones[i]].RawWeight;
+                    lecturas[i] = raw;
                 }
 
                 double x1 = lecturas[0], x2 = lecturas[1], x3 = lecturas[2], x4 = lecturas[3];
@@ -705,28 +712,16 @@ namespace FormulaGaussExample
                 double m4 = calibracionGauss.Coeficientes[3];
                 double b = calibracionGauss.Bias;
 
-                // 1. Guardar en config.json
-                var config = ConfigManager.CargarConfig() ?? new AppConfig();
-                config.CoeficienteM1 = m1;
-                config.CoeficienteM2 = m2;
-                config.CoeficienteM3 = m3;
-                config.CoeficienteM4 = m4;
-                config.BiasB = b;
-                config.CalibracionMultivariableActiva = true;
-                config.CompensacionEsquinasActiva = false;
-                config.FactoresCalibracion?.Clear();
-                ConfigManager.GuardarConfig(config);
-
-                // 2. Activar en CeldaManager para que ViewMain lo use en tiempo real
+                // Activar en CeldaManager para que ViewMain lo use en tiempo real
                 manager.ConfigurarCalibracionMultivariable(m1, m2, m3, m4, b);
 
-                // 3. Notificar al usuario
+                // Notificar al usuario
                 lblCoefGauss.Text = $"APLICADO — m1={m1:F6} m2={m2:F6} m3={m3:F6} m4={m4:F6} B={b:F6}";
                 btnAplicarGauss.Enabled = false;
                 btnAplicarGauss.Text = "✓ Calibración Activa";
 
                 MessageBox.Show(
-                    "Coeficientes guardados en config.json y aplicados al sistema.\n\n" +
+                    "Coeficientes aplicados al sistema.\n\n" +
                     "txtBalanza en ViewMain ahora refleja el peso calibrado en tiempo real.\n\n" +
                     $"Ecuación: PESO = X1·{m1:F6} + X2·{m2:F6} + X3·{m3:F6} + X4·{m4:F6} + ({b:F6})",
                     "Calibración Gauss Aplicada", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -763,6 +758,13 @@ namespace FormulaGaussExample
         private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
 
+        }
+
+        private void txtPesoCalibracion_TextChanged(object sender, EventArgs e)
+        {
+            var config = ConfigManager.CargarConfig() ?? new AppConfig();
+            config.CalibracionBalanza = txtPesoCalibracion.Text.Trim();
+            ConfigManager.GuardarConfig(config);
         }
     }
 }

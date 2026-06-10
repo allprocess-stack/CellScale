@@ -76,6 +76,12 @@
     <Compile Include="ViewCeldas.Designer.cs">
       <DependentUpon>ViewCeldas.cs</DependentUpon>
     </Compile>
+    <Compile Include="ViewWeightCeldas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ViewWeightCeldas.Designer.cs">
+      <DependentUpon>ViewWeightCeldas.cs</DependentUpon>
+    </Compile>
     <Compile Include="ViewMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -102,6 +108,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="ViewWeightCeldas.resx">
+      <DependentUpon>ViewWeightCeldas.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

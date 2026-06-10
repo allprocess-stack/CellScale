@@ -45,16 +45,10 @@
             this.tscbBalanza = new System.Windows.Forms.ToolStripComboBox();
             this.tsmiAbrirBalanza = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCerrarBalanza = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiSlave = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGuardarMenu = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsddbConfiguracion = new System.Windows.Forms.ToolStripDropDownButton();
-            this.tsmiCalibraciónBalanza = new System.Windows.Forms.ToolStripMenuItem();
-            this.tstbCalibracion = new System.Windows.Forms.ToolStripTextBox();
-            this.tsmiAbrirCalibracion = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiCerrarCalibracion = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiGuardarConfiguracion = new System.Windows.Forms.ToolStripMenuItem();
             this.tsbBd = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            this.tsbCeldasConfig = new System.Windows.Forms.ToolStripButton();
+            this.tsbPesoCeldas = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslblStatusConexion = new System.Windows.Forms.ToolStripStatusLabel();
@@ -66,6 +60,8 @@
             this.timerDataTrama = new System.Windows.Forms.Timer(this.components);
             this.lstCeldas = new System.Windows.Forms.ListBox();
             this.TimerPesaje = new System.Windows.Forms.Timer(this.components);
+            this.toolStripTextBox1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.tstbPesoCalibrar = new System.Windows.Forms.ToolStripTextBox();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -106,9 +102,9 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsddbtnLogin,
             this.tsddbMenu,
-            this.tsddbConfiguracion,
             this.tsbBd,
-            this.toolStripButton1});
+            this.tsbCeldasConfig,
+            this.tsbPesoCeldas});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(645, 25);
@@ -134,7 +130,7 @@
             this.tsmiUsuario.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtUsuario});
             this.tsmiUsuario.Name = "tsmiUsuario";
-            this.tsmiUsuario.Size = new System.Drawing.Size(151, 22);
+            this.tsmiUsuario.Size = new System.Drawing.Size(180, 22);
             this.tsmiUsuario.Text = "USUARIO";
             // 
             // txtUsuario
@@ -148,7 +144,7 @@
             this.tsmiContraseña.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtContrasena});
             this.tsmiContraseña.Name = "tsmiContraseña";
-            this.tsmiContraseña.Size = new System.Drawing.Size(151, 22);
+            this.tsmiContraseña.Size = new System.Drawing.Size(180, 22);
             this.tsmiContraseña.Text = "CONTRASEÑA";
             // 
             // txtContrasena
@@ -160,7 +156,7 @@
             // tsmiIngresar
             // 
             this.tsmiIngresar.Name = "tsmiIngresar";
-            this.tsmiIngresar.Size = new System.Drawing.Size(151, 22);
+            this.tsmiIngresar.Size = new System.Drawing.Size(180, 22);
             this.tsmiIngresar.Text = "INGRESAR";
             this.tsmiIngresar.Click += new System.EventHandler(this.tsmiIngresar_Click);
             // 
@@ -169,7 +165,7 @@
             this.tsddbMenu.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.tsddbMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiBalanza,
-            this.tsmiSlave,
+            this.toolStripTextBox1,
             this.tsmiGuardarMenu});
             this.tsddbMenu.Image = ((System.Drawing.Image)(resources.GetObject("tsddbMenu.Image")));
             this.tsddbMenu.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -207,64 +203,12 @@
             this.tsmiCerrarBalanza.Text = "Cerrar";
             this.tsmiCerrarBalanza.Click += new System.EventHandler(this.tsmiCerrarBalanza_Click);
             // 
-            // tsmiSlave
-            // 
-            this.tsmiSlave.Name = "tsmiSlave";
-            this.tsmiSlave.Size = new System.Drawing.Size(193, 22);
-            // 
             // tsmiGuardarMenu
             // 
             this.tsmiGuardarMenu.Name = "tsmiGuardarMenu";
             this.tsmiGuardarMenu.Size = new System.Drawing.Size(193, 22);
             this.tsmiGuardarMenu.Text = "Guardar configuración";
             this.tsmiGuardarMenu.Click += new System.EventHandler(this.tsmiGuardarMenu_Click);
-            // 
-            // tsddbConfiguracion
-            // 
-            this.tsddbConfiguracion.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsddbConfiguracion.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiCalibraciónBalanza,
-            this.tsmiGuardarConfiguracion});
-            this.tsddbConfiguracion.Image = ((System.Drawing.Image)(resources.GetObject("tsddbConfiguracion.Image")));
-            this.tsddbConfiguracion.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsddbConfiguracion.Name = "tsddbConfiguracion";
-            this.tsddbConfiguracion.Size = new System.Drawing.Size(115, 22);
-            this.tsddbConfiguracion.Text = "CONFIGURACIÓN";
-            // 
-            // tsmiCalibraciónBalanza
-            // 
-            this.tsmiCalibraciónBalanza.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tstbCalibracion,
-            this.tsmiAbrirCalibracion,
-            this.tsmiCerrarCalibracion});
-            this.tsmiCalibraciónBalanza.Name = "tsmiCalibraciónBalanza";
-            this.tsmiCalibraciónBalanza.Size = new System.Drawing.Size(195, 22);
-            this.tsmiCalibraciónBalanza.Text = "Calibración Balanza";
-            // 
-            // tstbCalibracion
-            // 
-            this.tstbCalibracion.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.tstbCalibracion.Name = "tstbCalibracion";
-            this.tstbCalibracion.Size = new System.Drawing.Size(100, 23);
-            // 
-            // tsmiAbrirCalibracion
-            // 
-            this.tsmiAbrirCalibracion.Name = "tsmiAbrirCalibracion";
-            this.tsmiAbrirCalibracion.Size = new System.Drawing.Size(160, 22);
-            this.tsmiAbrirCalibracion.Text = "ABRIR";
-            // 
-            // tsmiCerrarCalibracion
-            // 
-            this.tsmiCerrarCalibracion.Name = "tsmiCerrarCalibracion";
-            this.tsmiCerrarCalibracion.Size = new System.Drawing.Size(160, 22);
-            this.tsmiCerrarCalibracion.Text = "CERRAR";
-            // 
-            // tsmiGuardarConfiguracion
-            // 
-            this.tsmiGuardarConfiguracion.Name = "tsmiGuardarConfiguracion";
-            this.tsmiGuardarConfiguracion.Size = new System.Drawing.Size(195, 22);
-            this.tsmiGuardarConfiguracion.Text = "Guardar Configuración";
-            this.tsmiGuardarConfiguracion.Click += new System.EventHandler(this.tsmiGuardarConfiguracion_Click);
             // 
             // tsbBd
             // 
@@ -276,15 +220,25 @@
             this.tsbBd.Text = "BD";
             this.tsbBd.Click += new System.EventHandler(this.tsbBd_Click);
             // 
-            // toolStripButton1
+            // tsbCeldasConfig
             // 
-            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(99, 22);
-            this.toolStripButton1.Text = "CELDAS CONFIG";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            this.tsbCeldasConfig.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbCeldasConfig.Image = ((System.Drawing.Image)(resources.GetObject("tsbCeldasConfig.Image")));
+            this.tsbCeldasConfig.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbCeldasConfig.Name = "tsbCeldasConfig";
+            this.tsbCeldasConfig.Size = new System.Drawing.Size(99, 22);
+            this.tsbCeldasConfig.Text = "CELDAS CONFIG";
+            this.tsbCeldasConfig.Click += new System.EventHandler(this.toolStripButton1_Click);
+            // 
+            // tsbPesoCeldas
+            // 
+            this.tsbPesoCeldas.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbPesoCeldas.Image = ((System.Drawing.Image)(resources.GetObject("tsbPesoCeldas.Image")));
+            this.tsbPesoCeldas.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbPesoCeldas.Name = "tsbPesoCeldas";
+            this.tsbPesoCeldas.Size = new System.Drawing.Size(84, 22);
+            this.tsbPesoCeldas.Text = "PESO CELDAS";
+            this.tsbPesoCeldas.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
             // statusStrip1
             // 
@@ -364,6 +318,20 @@
             // 
             this.TimerPesaje.Tick += new System.EventHandler(this.TimerPesaje_Tick);
             // 
+            // toolStripTextBox1
+            // 
+            this.toolStripTextBox1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tstbPesoCalibrar});
+            this.toolStripTextBox1.Name = "toolStripTextBox1";
+            this.toolStripTextBox1.Size = new System.Drawing.Size(193, 22);
+            this.toolStripTextBox1.Text = "Peso Calibración";
+            // 
+            // tstbPesoCalibrar
+            // 
+            this.tstbPesoCalibrar.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.tstbPesoCalibrar.Name = "tstbPesoCalibrar";
+            this.tstbPesoCalibrar.Size = new System.Drawing.Size(100, 23);
+            // 
             // ViewMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -404,12 +372,6 @@
         private System.Windows.Forms.ToolStripStatusLabel tsslblStatusConexion;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
         private System.Windows.Forms.ToolStripStatusLabel tsslblTiempoConexion;
-        private System.Windows.Forms.ToolStripDropDownButton tsddbConfiguracion;
-        private System.Windows.Forms.ToolStripMenuItem tsmiCalibraciónBalanza;
-        private System.Windows.Forms.ToolStripTextBox tstbCalibracion;
-        private System.Windows.Forms.ToolStripMenuItem tsmiAbrirCalibracion;
-        private System.Windows.Forms.ToolStripMenuItem tsmiCerrarCalibracion;
-        private System.Windows.Forms.ToolStripMenuItem tsmiGuardarConfiguracion;
         private System.Windows.Forms.Timer timerTiempoConexion;
         private System.Windows.Forms.Timer timerDataTrama;
         private System.Windows.Forms.ToolStripDropDownButton tsddbtnLogin;
@@ -423,10 +385,12 @@
         private System.Windows.Forms.ToolStripTextBox txtUsuario;
         private System.Windows.Forms.ToolStripTextBox txtContrasena;
         private System.Windows.Forms.ListBox lstCeldas;
-        private System.Windows.Forms.ToolStripMenuItem tsmiSlave;
         private System.Windows.Forms.Timer TimerPesaje;
         private System.Windows.Forms.ToolStripButton tsbBd;
-        private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.ToolStripButton tsbCeldasConfig;
+        private System.Windows.Forms.ToolStripButton tsbPesoCeldas;
+        private System.Windows.Forms.ToolStripMenuItem toolStripTextBox1;
+        private System.Windows.Forms.ToolStripTextBox tstbPesoCalibrar;
     }
 }
 
