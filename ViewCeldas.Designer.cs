@@ -221,7 +221,7 @@
             this.lblTituloCalibracion.Location = new System.Drawing.Point(11, 20);
             this.lblTituloCalibracion.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTituloCalibracion.Name = "lblTituloCalibracion";
-            this.lblTituloCalibracion.Size = new System.Drawing.Size(264, 15);
+            this.lblTituloCalibracion.Size = new System.Drawing.Size(308, 18);
             this.lblTituloCalibracion.TabIndex = 19;
             this.lblTituloCalibracion.Text = "Calibración de Esquinas (Excentricidad)";
             // 
@@ -231,7 +231,7 @@
             this.lblPesoCalibracion.Location = new System.Drawing.Point(16, 44);
             this.lblPesoCalibracion.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblPesoCalibracion.Name = "lblPesoCalibracion";
-            this.lblPesoCalibracion.Size = new System.Drawing.Size(110, 13);
+            this.lblPesoCalibracion.Size = new System.Drawing.Size(139, 16);
             this.lblPesoCalibracion.TabIndex = 20;
             this.lblPesoCalibracion.Text = "Peso Calibración (kg):";
             // 
@@ -330,7 +330,7 @@
             this.lblCoefGauss.Location = new System.Drawing.Point(16, 195);
             this.lblCoefGauss.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblCoefGauss.Name = "lblCoefGauss";
-            this.lblCoefGauss.Size = new System.Drawing.Size(175, 13);
+            this.lblCoefGauss.Size = new System.Drawing.Size(232, 17);
             this.lblCoefGauss.TabIndex = 31;
             this.lblCoefGauss.Text = "Coeficientes: (pendiente...)";
             // 
@@ -341,7 +341,7 @@
             this.lblTituloGauss.Location = new System.Drawing.Point(11, 123);
             this.lblTituloGauss.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblTituloGauss.Name = "lblTituloGauss";
-            this.lblTituloGauss.Size = new System.Drawing.Size(292, 15);
+            this.lblTituloGauss.Size = new System.Drawing.Size(343, 18);
             this.lblTituloGauss.TabIndex = 28;
             this.lblTituloGauss.Text = "Calibración Multivariable (Gauss — 5 puntos)";
             // 
@@ -352,7 +352,7 @@
             this.lblPuntosGauss.Location = new System.Drawing.Point(16, 141);
             this.lblPuntosGauss.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblPuntosGauss.Name = "lblPuntosGauss";
-            this.lblPuntosGauss.Size = new System.Drawing.Size(74, 13);
+            this.lblPuntosGauss.Size = new System.Drawing.Size(91, 17);
             this.lblPuntosGauss.TabIndex = 29;
             this.lblPuntosGauss.Text = "Puntos: 0/5";
             // 
@@ -362,7 +362,7 @@
             this.lblEstadoCalibracion.Location = new System.Drawing.Point(16, 95);
             this.lblEstadoCalibracion.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblEstadoCalibracion.Name = "lblEstadoCalibracion";
-            this.lblEstadoCalibracion.Size = new System.Drawing.Size(406, 13);
+            this.lblEstadoCalibracion.Size = new System.Drawing.Size(509, 16);
             this.lblEstadoCalibracion.TabIndex = 27;
             this.lblEstadoCalibracion.Text = "Estado: Configure el peso de calibración y presione \"Capturar Cero\" (balanza vací" +
     "a).";

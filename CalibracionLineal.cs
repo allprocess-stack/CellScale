@@ -144,6 +144,34 @@ namespace FormulaGaussExample
             if (puntos == null || puntos.Count < 5)
                 throw new ArgumentException("Se necesitan al menos 5 puntos de calibración.", nameof(puntos));
 
+            // --- DETECTAR SI TODOS LOS PESOS SON IGUALES ---
+            double pesoRef = puntos[0].PesoConocido;
+            bool todosMismoPeso = true;
+            for (int i = 1; i < puntos.Count; i++)
+            {
+                if (Math.Abs(puntos[i].PesoConocido - pesoRef) > 1e-9)
+                {
+                    todosMismoPeso = false;
+                    break;
+                }
+            }
+
+            if (todosMismoPeso)
+            {
+                double sumaFactores = 0;
+                for (int i = 0; i < puntos.Count; i++)
+                {
+                    double sumaRaw = puntos[i].X1 + puntos[i].X2 + puntos[i].X3 + puntos[i].X4;
+                    sumaFactores += puntos[i].PesoConocido / sumaRaw;
+                }
+                double factor = sumaFactores / puntos.Count;
+                for (int i = 0; i < NumeroCeldas; i++)
+                    Coeficientes[i] = factor;
+                Bias = 0;
+                EstaCalibrado = true;
+                return true;
+            }
+
             int n = 5; // 4 coeficientes + 1 bias = 5 incógnitas
 
             // Construir matriz aumentada de 5x6
