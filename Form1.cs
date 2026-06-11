@@ -889,8 +889,11 @@ namespace FormulaGaussExample
 
         // --- Event handlers requeridos por el diseñador (aunque estén vacíos) ---
 
+        /// <summary>Manejador vacío requerido por el diseñador.</summary>
         private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e) { }
+        /// <summary>Manejador vacío requerido por el diseñador.</summary>
         private void toolStripDropDownButton1_Click(object sender, EventArgs e) { }
+        /// <summary>Manejador vacío requerido por el diseñador.</summary>
         private void label1_Click(object sender, EventArgs e) { }
     }
 }

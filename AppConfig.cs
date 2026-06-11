@@ -67,5 +67,22 @@ namespace FormulaGaussExample
 
         /// <summary>Indica si la compensación de esquinas está activa.</summary>
         public bool CompensacionEsquinasActiva { get; set; }
+
+        // --- Configuración de direcciones de celdas (para ViewCeldaConfig) ---
+
+        /// <summary>Dirección o identificador de la celda 1 (ej: S00).</summary>
+        public string Celda1 { get; set; }
+
+        /// <summary>Dirección o identificador de la celda 2 (ej: S01).</summary>
+        public string Celda2 { get; set; }
+
+        /// <summary>Dirección o identificador de la celda 3 (ej: S02).</summary>
+        public string Celda3 { get; set; }
+
+        /// <summary>Dirección o identificador de la celda 4 (ej: S03).</summary>
+        public string Celda4 { get; set; }
+
+        /// <summary>Lista de direcciones de celdas separadas por comas (ej: S00,S01,S02,S03).</summary>
+        public string Celdas { get; set; }
     }
 }

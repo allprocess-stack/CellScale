@@ -6,13 +6,17 @@ namespace FormulaGaussExample
     {
         private double[] coeficientes;
 
+        /// <summary>Indica si la balanza tiene coeficientes de calibración cargados.</summary>
         public bool EstaCalibrado => coeficientes != null && coeficientes.Length == 4;
 
+        /// <summary>Devuelve los 4 coeficientes de corrección matricial.</summary>
         public double[] ObtenerCoeficientes()
         {
             return coeficientes;
         }
 
+        /// <summary>Establece los 4 coeficientes de corrección matricial.</summary>
+        /// <param name="coefs">Arreglo de 4 coeficientes double.</param>
         public void EstablecerCoeficientes(double[] coefs)
         {
             if (coefs == null || coefs.Length != 4)
@@ -20,6 +24,9 @@ namespace FormulaGaussExample
             coeficientes = coefs;
         }
 
+        /// <summary>Realiza la calibración resolviendo el sistema matricial 4x4.</summary>
+        /// <param name="lecturas">Matriz 4x4 con lecturas de las 4 celdas en 4 posiciones.</param>
+        /// <param name="pesoPatron">Peso patrón conocido colocado en la balanza.</param>
         public void Calibrar(double[,] lecturas, double pesoPatron)
         {
             if (lecturas == null)
@@ -44,6 +51,9 @@ namespace FormulaGaussExample
             coeficientes = ResolverGaussJordan(matrizA, vectorB);
         }
 
+        /// <summary>Calcula el peso corregido aplicando los coeficientes matriciales.</summary>
+        /// <param name="lecturasActuales">Lecturas actuales de las 4 celdas.</param>
+        /// <returns>Peso corregido en kg.</returns>
         public double ObtenerPesoCorregido(double[] lecturasActuales)
         {
             if (!EstaCalibrado)
@@ -59,6 +69,10 @@ namespace FormulaGaussExample
             return peso;
         }
 
+        /// <summary>Resuelve un sistema 4x4 usando el método de Gauss-Jordan con pivoteo parcial.</summary>
+        /// <param name="matrizA">Matriz de coeficientes 4x4.</param>
+        /// <param name="vectorB">Vector de términos independientes de tamaño 4.</param>
+        /// <returns>Arreglo con la solución del sistema.</returns>
         private static double[] ResolverGaussJordan(double[,] matrizA, double[] vectorB)
         {
             int n = 4;

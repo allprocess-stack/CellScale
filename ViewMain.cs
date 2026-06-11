@@ -41,9 +41,6 @@ namespace FormulaGaussExample
         // Indica si se recibió al menos una trama válida en el último intervalo
         private bool ultimaTramaRecibida = false;
 
-        // Motor de calibración lineal multivariable
-        private CalibracionLineal calibracionLineal;
-
         // Labels creados programáticamente para mostrar pesos (no existen en el diseñador)
         //private Label lblPesoUnificado;
         //private Label lblPesoIndividual;
@@ -151,9 +148,123 @@ namespace FormulaGaussExample
             // Se accede al TextBox subyacente porque ToolStripTextBox no expone PasswordChar directamente
             txtContrasena.TextBox.PasswordChar = '*';
 
+            
+
+            // Agregar opción de Calibración Gauss en el menú
+            var tsmiCalGauss = new ToolStripMenuItem
+            {
+                Name = "tsmiCalGauss",
+                Text = "Calibración Gauss 5-Ptos"
+            };
+            tsmiCalGauss.Click += TsmiCalGauss_Click;
+            tsddbMenu.DropDownItems.Add(tsmiCalGauss);
+
             // Conectar automáticamente la balanza al iniciar la aplicación
             if (config != null && !string.IsNullOrEmpty(config.COMBalanza))
                 _ = ConectarBalanza(config.COMBalanza);
+        }
+
+      
+        private List<PuntoCalibracion> PuntosCalGauss = new List<PuntoCalibracion>();
+        /// <summary>Ejecuta la calibración Gauss de 5 puntos desde el menú. Captura lecturas y resuelve el sistema.</summary>
+        private void TsmiCalGauss_Click(object sender, EventArgs e)
+        {
+            if (manager == null || !manager.IsOpen)
+            {
+                MessageBox.Show("La balanza no está conectada.\nConecte la balanza primero o use el SIMULADOR.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!double.TryParse(tstbPesoCalibrar.Text.Trim(), out double pesoConocido) || pesoConocido <= 0)
+            {
+                MessageBox.Show("Ingrese un peso conocido válido en 'Peso Calibración'.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var celdas = manager.Celdas.Values
+                .Where(c => c.Connected)
+                .OrderBy(c => c.SlaveNumber)
+                .Take(4)
+                .ToList();
+
+            if (celdas.Count < 4)
+            {
+                MessageBox.Show($"Se requieren 4 celdas conectadas. Solo hay {celdas.Count}.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                double x1 = 0, x2 = 0, x3 = 0, x4 = 0;
+                for (int i = 0; i < 4; i++)
+                {
+                    manager.ConsultarPeso(celdas[i].SlaveNumber);
+                    switch (i)
+                    {
+                        case 0: x1 = celdas[i].RawWeight; break;
+                        case 1: x2 = celdas[i].RawWeight; break;
+                        case 2: x3 = celdas[i].RawWeight; break;
+                        case 3: x4 = celdas[i].RawWeight; break;
+                    }
+                }
+
+                PuntosCalGauss.Add(new PuntoCalibracion
+                {
+                    X1 = x1, X2 = x2, X3 = x3, X4 = x4,
+                    PesoConocido = pesoConocido
+                });
+
+                int restantes = 5 - PuntosCalGauss.Count;
+
+                if (restantes > 0)
+                {
+                    MessageBox.Show(
+                        $"Punto #{PuntosCalGauss.Count} registrado.\n" +
+                        $"Celdas: S{celdas[0].SlaveNumber:D2} S{celdas[1].SlaveNumber:D2} " +
+                        $"S{celdas[2].SlaveNumber:D2} S{celdas[3].SlaveNumber:D2}\n" +
+                        $"Lecturas: {x1:F1}, {x2:F1}, {x3:F1}, {x4:F1}\n" +
+                        $"Peso conocido: {pesoConocido} kg\n\n" +
+                        $"Faltan {restantes} punto(s). Cambie el peso y presione nuevamente.",
+                        "Punto registrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                var calGauss = new CalibracionLineal();
+                if (calGauss.Calibrar(PuntosCalGauss))
+                {
+                    config.CoeficienteM1 = calGauss.Coeficientes[0];
+                    config.CoeficienteM2 = calGauss.Coeficientes[1];
+                    config.CoeficienteM3 = calGauss.Coeficientes[2];
+                    config.CoeficienteM4 = calGauss.Coeficientes[3];
+                    config.BiasB = calGauss.Bias;
+                    config.CalibracionMultivariableActiva = true;
+                    config.CompensacionEsquinasActiva = false;
+                    ConfigManager.GuardarConfig(config);
+
+                    manager.ConfigurarCalibracionMultivariable(
+                        config.CoeficienteM1, config.CoeficienteM2,
+                        config.CoeficienteM3, config.CoeficienteM4, config.BiasB);
+
+                    string informe = calGauss.GenerarInforme(PuntosCalGauss);
+                    MessageBox.Show(informe, "Calibración Gauss Exitosa",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    PuntosCalGauss.Clear();
+                }
+                else
+                {
+                    MessageBox.Show("No se pudo resolver el sistema. Verifique los puntos.",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error en calibración Gauss: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         /// <summary>
@@ -391,6 +502,7 @@ namespace FormulaGaussExample
             menu.AutoClose = true;
         }
 
+        /// <summary>Conecta la balanza, enumera las celdas e inicia los timers de pesaje.</summary>
         private async Task ConectarBalanza(string puertoBalanza)
         {
             try
@@ -712,11 +824,13 @@ namespace FormulaGaussExample
         private void label1_Click(object sender, EventArgs e) { }
 
 
+        /// <summary>Abre el formulario de configuración de base de datos.</summary>
         private void tsbBd_Click(object sender, EventArgs e)
         {
             new ViewBd().Show();
         }
 
+        /// <summary>Abre el formulario de calibración y consulta de celdas.</summary>
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
             if (manager == null)
@@ -728,6 +842,7 @@ namespace FormulaGaussExample
             new ViewCeldas(manager, conexion).Show();
         }
 
+        /// <summary>Abre el formulario de monitoreo en tiempo real de pesos individuales.</summary>
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
             if (manager == null)
@@ -739,6 +854,7 @@ namespace FormulaGaussExample
             new ViewWeightCeldas(manager).Show();
         }
 
+        /// <summary>Valida que se haya ingresado un peso para calibrar antes de continuar.</summary>
         private void toolStripTextBox3_Click(object sender, EventArgs e)
         {
             var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
@@ -755,6 +871,7 @@ namespace FormulaGaussExample
             menu.AutoClose = true;
         }
 
+        /// <summary>Notifica que el peso a calibrar fue deseleccionado.</summary>
         private void toolStripTextBox4_Click(object sender, EventArgs e)
         {
             var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);

@@ -173,11 +173,13 @@ namespace FormulaGaussExample
             UsarCompensacionEsquinas = false;
         }
 
+        /// <summary>Devuelve una copia de los valores de cero para compensación de esquinas.</summary>
         public double[] ObtenerCerosCompensacion()
         {
             return (double[])cerosCompensacion.Clone();
         }
 
+        /// <summary>Devuelve una copia de los factores de corrección para compensación de esquinas.</summary>
         public double[] ObtenerFactoresCompensacion()
         {
             return (double[])factoresCompensacion.Clone();
@@ -496,7 +498,7 @@ namespace FormulaGaussExample
         public double ConsultarPeso(int direccion)
         {
             string respuesta = EnviarComando(direccion, "MSV?");
-            double rawWeight = ExtraerValorNumerico(respuesta);
+            double rawWeight = ExtraerPesoHBM(respuesta);
 
             // Solo actualizar la celda si la respuesta es válida (tiene un número)
             bool respuestaValida = !string.IsNullOrEmpty(respuesta)
@@ -677,6 +679,7 @@ namespace FormulaGaussExample
         /// En modo simple: suma los pesos calibrados de todas las celdas conectadas.
         /// </summary>
         /// <returns>Peso total del sistema en kg.</returns>
+        /// <summary>Obtiene hasta 4 celdas conectadas ordenadas por dirección esclavo ascendente.</summary>
         private List<CeldaInfo> ObtenerCeldasOrdenadas()
         {
             return Celdas.Values

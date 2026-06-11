@@ -31,6 +31,7 @@ namespace FormulaGaussExample
         private List<PuntoCalibracion> puntosGauss;
         private int puntoActualGauss = 0;
 
+        /// <summary>Inicializa el formulario de visualización y calibración de celdas.</summary>
         public ViewCeldas(CeldaManager manager, ConectionBD conexion)
         {
             InitializeComponent();
@@ -51,6 +52,7 @@ namespace FormulaGaussExample
             CargarPesoCalibracionConfig();
         }
 
+        /// <summary>Inicializa los campos de calibración de esquinas a sus valores por defecto.</summary>
         private void InicializarEstadoCalibracion()
         {
             ceros = new double[4];
@@ -61,6 +63,7 @@ namespace FormulaGaussExample
             ActualizarEstadoCalibracionUI();
         }
 
+        /// <summary>Actualiza la UI según el estado actual de la calibración de esquinas.</summary>
         private void ActualizarEstadoCalibracionUI()
         {
             btnEsquina1.Enabled = cerosCapturados;
@@ -83,6 +86,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Inicializa el estado de la calibración Gauss multivariable.</summary>
         private void InicializarCalibracionGauss()
         {
             calibracionGauss = new CalibracionLineal();
@@ -93,6 +97,7 @@ namespace FormulaGaussExample
             ActualizarPuntosGaussUI();
         }
 
+        /// <summary>Actualiza los labels de progreso de la calibración Gauss.</summary>
         private void ActualizarPuntosGaussUI()
         {
             lblPuntosGauss.Text = $"Puntos: {puntoActualGauss}/5";
@@ -102,6 +107,7 @@ namespace FormulaGaussExample
             btnCapturarPuntoGauss.Enabled = puntoActualGauss < 5;
         }
 
+        /// <summary>Carga el peso de calibración desde config.json al campo de texto.</summary>
         private void CargarPesoCalibracionConfig()
         {
             var config = ConfigManager.CargarConfig();
@@ -111,6 +117,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Crea los TextBox para consultar direcciones personalizadas de celdas.</summary>
         private void InicializarConsultTextBoxes()
         {
             int[] xPositions = { 26, 140, 250, 363 };
@@ -130,6 +137,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Configura la vista al cargar: suscribe eventos e inicia el timer.</summary>
         private void ViewCeldas_Load(object sender, EventArgs e)
         {
             if (manager == null)
@@ -144,6 +152,7 @@ namespace FormulaGaussExample
             timerActualizacion.Start();
         }
 
+        /// <summary>Actualiza los labels, TextBox y botones de cada slot según las celdas conectadas.</summary>
         private void ActualizarSlots()
         {
             if (manager == null) return;
@@ -212,6 +221,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Obtiene el Label del slot indicado (0-3).</summary>
         private Label ObtenerLabel(int index)
         {
             switch (index)
@@ -224,6 +234,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Obtiene el TextBox de peso del slot indicado (0-3).</summary>
         private TextBox ObtenerTextBox(int index)
         {
             switch (index)
@@ -236,6 +247,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Obtiene el Button de consulta del slot indicado (0-3).</summary>
         private Button ObtenerButton(int index)
         {
             switch (index)
@@ -248,6 +260,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Obtiene el TextBox de dirección personalizada del slot indicado.</summary>
         private TextBox ObtenerConsultTextBox(int index)
         {
             if (index >= 0 && index < txtConsultCelda.Length)
@@ -255,6 +268,7 @@ namespace FormulaGaussExample
             return null;
         }
 
+        /// <summary>Convierte un texto como "S01" o "1" a una dirección numérica de celda.</summary>
         private int ParsearDireccionConsult(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return -1;
@@ -264,11 +278,16 @@ namespace FormulaGaussExample
             return -1;
         }
 
+        /// <summary>Consulta el peso de la celda en el slot 0.</summary>
         private async void btnCelda1_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(0);
+        /// <summary>Consulta el peso de la celda en el slot 1.</summary>
         private async void btnCelda2_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(1);
+        /// <summary>Consulta el peso de la celda en el slot 2.</summary>
         private async void btnCelda3_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(2);
+        /// <summary>Consulta el peso de la celda en el slot 3.</summary>
         private async void btnCelda4_Click(object sender, EventArgs e) => await ConsultarPesoSlotAsync(3);
 
+        /// <summary>Consulta el peso de una celda en segundo plano y actualiza la UI.</summary>
         private async Task ConsultarPesoSlotAsync(int slotIndex)
         {
             if (manager == null || !manager.IsOpen) { 
@@ -329,6 +348,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Guarda el peso de una celda en la tabla celda_peso de la BD.</summary>
         private void GuardarPesoEnBD(string nombreCelda, double peso)
         {
             if (conexion == null) return;
@@ -351,6 +371,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Consulta los pesos de todas las celdas simultáneamente y los guarda en BD.</summary>
         private async void btnPesos_Click(object sender, EventArgs e)
         {
             if (manager == null || !manager.IsOpen) return;
@@ -366,6 +387,12 @@ namespace FormulaGaussExample
             }
             try
             {
+                var celdasConsulta = manager.Celdas.Values
+                    .Where(c => c.Connected)
+                    .OrderBy(c => c.SlaveNumber)
+                    .Take(4)
+                    .ToList();
+
                 for (int i = 0; i < 4; i++)
                 {
                     TextBox txtConsult = ObtenerConsultTextBox(i);
@@ -376,6 +403,10 @@ namespace FormulaGaussExample
                         direccion = ParsearDireccionConsult(txtConsult.Text);
                         if (direccion < 0) continue;
                         txtConsult.Text = $"S{direccion:D2}";
+                    }
+                    else if (i < celdasConsulta.Count)
+                    {
+                        direccion = celdasConsulta[i].SlaveNumber;
                     }
                     else
                     {
@@ -411,6 +442,7 @@ namespace FormulaGaussExample
             }
         }
 
+        /// <summary>Timer que actualiza los slots periódicamente (250ms).</summary>
         private void TimerActualizacion_Tick(object sender, EventArgs e)
         {
             if (manager == null || !manager.IsOpen) return;
@@ -418,6 +450,7 @@ namespace FormulaGaussExample
             ActualizarSlots();
         }
 
+        /// <summary>Actualiza los slots cuando se recibe un nuevo peso desde el manager.</summary>
         private void Manager_PesoActualizado(int direccion, double pesoCalibrado)
         {
             if (this.IsHandleCreated)
@@ -604,20 +637,32 @@ namespace FormulaGaussExample
                 return;
             }
 
+            var celdasGauss = manager.Celdas.Values
+                .Where(c => c.Connected)
+                .OrderBy(c => c.SlaveNumber)
+                .Take(4)
+                .ToList();
+
+            if (celdasGauss.Count < 4)
+            {
+                MessageBox.Show($"Se requieren 4 celdas conectadas para calibración Gauss. Solo hay {celdasGauss.Count}.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             btnCapturarPuntoGauss.Enabled = false;
             lblCoefGauss.Text = $"Capturando punto #{puntoActualGauss + 1}...";
 
             try
             {
-                // Leer las 4 direcciones fijas S00, S01, S02, S03 (direcciones 0, 1, 2, 3)
-                int[] direcciones = { 0, 1, 2, 3 };
                 double[] lecturas = new double[4];
                 for (int i = 0; i < 4; i++)
                 {
-                    await Task.Run(() => manager.ConsultarPeso(direcciones[i]));
+                    int addr = celdasGauss[i].SlaveNumber;
+                    await Task.Run(() => manager.ConsultarPeso(addr));
                     double raw = 0;
-                    if (manager.Celdas.ContainsKey(direcciones[i]))
-                        raw = manager.Celdas[direcciones[i]].RawWeight;
+                    if (manager.Celdas.ContainsKey(addr))
+                        raw = manager.Celdas[addr].RawWeight;
                     lecturas[i] = raw;
                 }
 
