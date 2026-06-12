@@ -88,6 +88,7 @@
             this.txtViewCelda4.TabIndex = 7;
             this.txtViewCelda4.Text = "---";
             this.txtViewCelda4.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            //this.txtViewCelda4.TextChanged += new System.EventHandler(this.txtViewCelda4_TextChanged);
             // 
             // label1
             // 
@@ -131,7 +132,7 @@
             // 
             // ViewWeightCeldas
             // 
-            this.ClientSize = new System.Drawing.Size(560, 100);
+            this.ClientSize = new System.Drawing.Size(620, 120);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label3);

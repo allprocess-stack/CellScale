@@ -64,6 +64,13 @@
     <Compile Include="ConfigManager.cs" />
     <Compile Include="AppConfig.cs" />
     <Compile Include="CalibracionLineal.cs" />
+    <Compile Include="WeightService.cs" />
+    <Compile Include="ViewCeldaConfig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ViewCeldaConfig.Designer.cs">
+      <DependentUpon>ViewCeldaConfig.cs</DependentUpon>
+    </Compile>
     <Compile Include="ViewBd.cs">
       <SubType>Form</SubType>
     </Compile>

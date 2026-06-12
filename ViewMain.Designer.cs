@@ -45,6 +45,8 @@
             this.tscbBalanza = new System.Windows.Forms.ToolStripComboBox();
             this.tsmiAbrirBalanza = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCerrarBalanza = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripTextBox1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.tstbPesoCalibrar = new System.Windows.Forms.ToolStripTextBox();
             this.tsmiGuardarMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.tsbBd = new System.Windows.Forms.ToolStripButton();
             this.tsbCeldasConfig = new System.Windows.Forms.ToolStripButton();
@@ -60,8 +62,6 @@
             this.timerDataTrama = new System.Windows.Forms.Timer(this.components);
             this.lstCeldas = new System.Windows.Forms.ListBox();
             this.TimerPesaje = new System.Windows.Forms.Timer(this.components);
-            this.toolStripTextBox1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.tstbPesoCalibrar = new System.Windows.Forms.ToolStripTextBox();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -91,9 +91,9 @@
             // txtBalanza
             // 
             this.txtBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 48F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBalanza.Location = new System.Drawing.Point(140, 183);
+            this.txtBalanza.Location = new System.Drawing.Point(36, 178);
             this.txtBalanza.Name = "txtBalanza";
-            this.txtBalanza.Size = new System.Drawing.Size(384, 80);
+            this.txtBalanza.Size = new System.Drawing.Size(565, 80);
             this.txtBalanza.TabIndex = 3;
             // 
             // toolStrip1
@@ -130,7 +130,7 @@
             this.tsmiUsuario.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtUsuario});
             this.tsmiUsuario.Name = "tsmiUsuario";
-            this.tsmiUsuario.Size = new System.Drawing.Size(180, 22);
+            this.tsmiUsuario.Size = new System.Drawing.Size(151, 22);
             this.tsmiUsuario.Text = "USUARIO";
             // 
             // txtUsuario
@@ -144,7 +144,7 @@
             this.tsmiContraseña.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.txtContrasena});
             this.tsmiContraseña.Name = "tsmiContraseña";
-            this.tsmiContraseña.Size = new System.Drawing.Size(180, 22);
+            this.tsmiContraseña.Size = new System.Drawing.Size(151, 22);
             this.tsmiContraseña.Text = "CONTRASEÑA";
             // 
             // txtContrasena
@@ -156,7 +156,7 @@
             // tsmiIngresar
             // 
             this.tsmiIngresar.Name = "tsmiIngresar";
-            this.tsmiIngresar.Size = new System.Drawing.Size(180, 22);
+            this.tsmiIngresar.Size = new System.Drawing.Size(151, 22);
             this.tsmiIngresar.Text = "INGRESAR";
             this.tsmiIngresar.Click += new System.EventHandler(this.tsmiIngresar_Click);
             // 
@@ -202,6 +202,20 @@
             this.tsmiCerrarBalanza.Size = new System.Drawing.Size(181, 22);
             this.tsmiCerrarBalanza.Text = "Cerrar";
             this.tsmiCerrarBalanza.Click += new System.EventHandler(this.tsmiCerrarBalanza_Click);
+            // 
+            // toolStripTextBox1
+            // 
+            this.toolStripTextBox1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tstbPesoCalibrar});
+            this.toolStripTextBox1.Name = "toolStripTextBox1";
+            this.toolStripTextBox1.Size = new System.Drawing.Size(193, 22);
+            this.toolStripTextBox1.Text = "Peso Calibración";
+            // 
+            // tstbPesoCalibrar
+            // 
+            this.tstbPesoCalibrar.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.tstbPesoCalibrar.Name = "tstbPesoCalibrar";
+            this.tstbPesoCalibrar.Size = new System.Drawing.Size(100, 23);
             // 
             // tsmiGuardarMenu
             // 
@@ -317,20 +331,6 @@
             // TimerPesaje
             // 
             this.TimerPesaje.Tick += new System.EventHandler(this.TimerPesaje_Tick);
-            // 
-            // toolStripTextBox1
-            // 
-            this.toolStripTextBox1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tstbPesoCalibrar});
-            this.toolStripTextBox1.Name = "toolStripTextBox1";
-            this.toolStripTextBox1.Size = new System.Drawing.Size(193, 22);
-            this.toolStripTextBox1.Text = "Peso Calibración";
-            // 
-            // tstbPesoCalibrar
-            // 
-            this.tstbPesoCalibrar.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.tstbPesoCalibrar.Name = "tstbPesoCalibrar";
-            this.tstbPesoCalibrar.Size = new System.Drawing.Size(100, 23);
             // 
             // ViewMain
             // 

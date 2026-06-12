@@ -7,17 +7,20 @@ namespace FormulaGaussExample
     {
         private AppConfig config;
 
+        /// <summary>Inicializa el formulario de configuración de direcciones de celdas.</summary>
         public ViewCeldaConfig(AppConfig config)
         {
             InitializeComponent();
             this.config = config;
         }
 
+        /// <summary>Carga los datos de configuración al cargar el formulario.</summary>
         private void ViewCeldaConfig_Load(object sender, EventArgs e)
         {
             CargarConfig();
         }
 
+        /// <summary>Carga las direcciones de las 4 celdas desde el objeto config a los TextBox.</summary>
         private void CargarConfig()
         {
             if (config == null) return;
@@ -27,6 +30,7 @@ namespace FormulaGaussExample
             txtCelda4.Text = config.Celda4;
         }
 
+        /// <summary>Guarda las direcciones de las celdas en config.json.</summary>
         private void btnGuardar_Click(object sender, EventArgs e)
         {
             if (config == null) return;

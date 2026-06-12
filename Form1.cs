@@ -158,13 +158,13 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Carga las direcciones esclavo disponibles (1 a 15) en el combobox
-        /// de selección de celda. La dirección 0 no se usa según el protocolo.
+        /// Carga las direcciones esclavo disponibles (0 a 15) en el combobox
+        /// de selección de celda.
         /// </summary>
         private void CargarSlaveNumbers()
         {
             tscbSlave.Items.Clear();
-            for (int i = 1; i <= 15; i++)
+            for (int i = 0; i <= 15; i++)
             {
                 tscbSlave.Items.Add(i.ToString("D2"));
             }
@@ -889,8 +889,11 @@ namespace FormulaGaussExample
 
         // --- Event handlers requeridos por el diseñador (aunque estén vacíos) ---
 
+        /// <summary>Manejador vacío requerido por el diseñador.</summary>
         private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e) { }
+        /// <summary>Manejador vacío requerido por el diseñador.</summary>
         private void toolStripDropDownButton1_Click(object sender, EventArgs e) { }
+        /// <summary>Manejador vacío requerido por el diseñador.</summary>
         private void label1_Click(object sender, EventArgs e) { }
     }
 }
