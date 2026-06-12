@@ -316,6 +316,7 @@ namespace FormulaGaussExample
                     tsslblTrama.Text = "Trama recibida";
                     tsslblTrama.ForeColor = Color.Green;
                     ultimaTramaRecibida = true;
+                    //MessageBox.Show(trama);
                 }
                 else if (trama != null && trama.StartsWith("ERROR"))
                 {

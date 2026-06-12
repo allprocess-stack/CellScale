@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,7 +14,6 @@ namespace FormulaGaussExample
         {
             InitializeComponent();
             this.manager = manager;
-            timerActualizacion.Tick += TimerActualizacion_Tick;
         }
 
         /// <summary>Inicia el timer de actualización al cargar el formulario.</summary>
@@ -82,5 +81,7 @@ namespace FormulaGaussExample
             timerActualizacion?.Dispose();
             base.OnFormClosing(e);
         }
+
+        
     }
 }

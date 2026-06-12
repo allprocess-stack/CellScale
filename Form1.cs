@@ -158,13 +158,13 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Carga las direcciones esclavo disponibles (1 a 15) en el combobox
-        /// de selección de celda. La dirección 0 no se usa según el protocolo.
+        /// Carga las direcciones esclavo disponibles (0 a 15) en el combobox
+        /// de selección de celda.
         /// </summary>
         private void CargarSlaveNumbers()
         {
             tscbSlave.Items.Clear();
-            for (int i = 1; i <= 15; i++)
+            for (int i = 0; i <= 15; i++)
             {
                 tscbSlave.Items.Add(i.ToString("D2"));
             }
