@@ -46,7 +46,7 @@ namespace FormulaGaussExample
         //private Label lblPesoIndividual;
 
         // Índice round-robin para consultar celdas cada 250ms
-        private int indiceConsulta = 0;
+
 
         /// <summary>
         /// Inicializa el formulario principal.
@@ -62,6 +62,9 @@ namespace FormulaGaussExample
             //tsddbConfiguracion.Visible = false;
             //tsbCeldasConfig.Visible=true;
             //tsbPesoCeldas.Visible=true;
+            tsslblTrama.Text = "Sin trama";
+            tsslblTrama.ForeColor = Color.Red;
+
 
             // Cargar configuración desde config.json
             config = ConfigManager.CargarConfig();
@@ -201,7 +204,7 @@ namespace FormulaGaussExample
                 double x1 = 0, x2 = 0, x3 = 0, x4 = 0;
                 for (int i = 0; i < 4; i++)
                 {
-                    manager.ConsultarPeso(celdas[i].SlaveNumber);
+                    manager.ConsultarPeso(i);
                     switch (i)
                     {
                         case 0: x1 = celdas[i].RawWeight; break;
@@ -311,6 +314,7 @@ namespace FormulaGaussExample
         {
             this.Invoke(new Action(() =>
             {
+                
                 if (!string.IsNullOrEmpty(trama) && !trama.StartsWith("ERROR"))
                 {
                     tsslblTrama.Text = "Trama recibida";
@@ -517,20 +521,13 @@ namespace FormulaGaussExample
                     tiempoInicioConexion = DateTime.Now;
                     btnRegistrar.Enabled = true;
 
-                    // Enumerar celdas en segundo plano para no congelar la UI
-                    // (~4.5 segundos de escaneo de direcciones 1-15)
-                    List<CeldaInfo> celdas = await Task.Run(() => manager.EnumerarCeldas());
+                    List<CeldaInfo> celdas = await Task.Run(() => manager.InicializarCeldasTemporal());
 
-                    if (celdas.Count > 0)
-                    {
-                        MessageBox.Show($"Balanza conectada en {puertoBalanza}\n{celdas.Count} celda(s) detectada(s)",
-                            "Conexión exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Balanza conectada en {puertoBalanza}\nNo se detectaron celdas",
-                            "Conexión exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine("Celdas detectadas:");
+                    foreach (var c in celdas.OrderBy(c => c.SlaveNumber))
+                        sb.AppendLine($"  S{c.SlaveNumber:D2} -> Peso: {c.RawWeight:F2} kg");
+                    MessageBox.Show(sb.ToString(), "Celdas detectadas", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     // Iniciar timer de pesaje periódico
                     TimerPesaje.Start();
@@ -625,46 +622,32 @@ namespace FormulaGaussExample
             menu.AutoClose = true;
         }
 
-        // Lista estática para acumular puntos de calibración durante la sesión
-        private List<PuntoCalibracion> PuntosCalibracion = new List<PuntoCalibracion>();
-        /// <summary>
-        /// Actualiza el ListBox de celdas con las celdas conectadas actualmente.
-        /// </summary>
-        private void ActualizarListaCeldas()
-        {
-            lstCeldas.Items.Clear();
-            foreach (var celda in manager.Celdas.Values)
-            {
-                if (celda.Connected)
-                {
-                    lstCeldas.Items.Add(celda.ToString());
-                }
-            }
-        }
+        private bool actualizandoPesaje = false;
 
         /// <summary>
         /// Timer principal de pesaje que se ejecuta cada 250ms mientras
-        /// la balanza está conectada. Consulta una celda distinta cada tick
-        /// (round-robin) para registrar la medición de todas las celdas.
+        /// la balanza está conectada. Consulta las 4 celdas S00-S03.
         /// </summary>
         private async void TimerPesaje_Tick(object sender, EventArgs e)
         {
-            if (manager != null && manager.IsOpen)
+            if (manager != null && manager.IsOpen && !actualizandoPesaje)
             {
-                var celdasConectadas = manager.Celdas.Values
-                    .Where(c => c.Connected)
-                    .OrderBy(c => c.SlaveNumber)
-                    .ToList();
-
-                if (celdasConectadas.Count > 0)
+                actualizandoPesaje = true;
+                try
                 {
-                    int idx = indiceConsulta % celdasConectadas.Count;
-                    var celda = celdasConectadas[idx];
-                    await Task.Run(() => manager.ConsultarPeso(celda.SlaveNumber));
-                    indiceConsulta++;
+                    await Task.Run(() =>
+                    {
+                        manager.ConsultarPeso(0);
+                        manager.ConsultarPeso(1);
+                        manager.ConsultarPeso(2);
+                        manager.ConsultarPeso(3);
+                    });
+                }
+                finally
+                {
+                    actualizandoPesaje = false;
                 }
 
-                // Actualizar peso unificado
                 double pesoUnificado = manager.ObtenerPesoUnificado();
                 txtBalanza.Text = pesoUnificado.ToString("F2");
                 ultimoPesoCalibrado = pesoUnificado;
@@ -855,32 +838,5 @@ namespace FormulaGaussExample
             new ViewWeightCeldas(manager).Show();
         }
 
-        /// <summary>Valida que se haya ingresado un peso para calibrar antes de continuar.</summary>
-        private void toolStripTextBox3_Click(object sender, EventArgs e)
-        {
-            var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
-            menu.AutoClose = false;
-
-            string pesoCalibrar = tstbPesoCalibrar.Text;
-            if (string.IsNullOrEmpty(pesoCalibrar))
-            {
-                MessageBox.Show("Ingrese un peso para calibrar balanza", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                menu.AutoClose = true;
-                return;
-            }
-
-            menu.AutoClose = true;
-        }
-
-        /// <summary>Notifica que el peso a calibrar fue deseleccionado.</summary>
-        private void toolStripTextBox4_Click(object sender, EventArgs e)
-        {
-            var menu = ((ToolStripDropDownMenu)((ToolStripMenuItem)sender).Owner);
-            menu.AutoClose = false;
-
-            MessageBox.Show("Peso a calibrar deseleccionado correctamente.", "Desconexión", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            menu.AutoClose = true;
-        }
     }
 }

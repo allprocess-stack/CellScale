@@ -116,36 +116,6 @@ namespace FormulaGaussExample
         /// <summary>
         /// Desactiva la calibración multivariable y vuelve al modo simple.
         /// </summary>
-        public void DesactivarCalibracionMultivariable()
-        {
-            calibracionMultivariable = null;
-            UsarCalibracionMultivariable = false;
-        }
-
-        /// <summary>
-        /// Configura la calibración matricial con los coeficientes resueltos.
-        /// Activa el modo de calibración matricial automáticamente.
-        /// </summary>
-        public void ConfigurarCalibracionMatricial(double[] coeficientes)
-        {
-            if (coeficientes == null || coeficientes.Length != 4)
-                throw new ArgumentException("Debe proporcionar 4 coeficientes de corrección.");
-
-            calibracionMatricial = new BalanzaMatricial();
-            calibracionMatricial.EstablecerCoeficientes(coeficientes);
-            UsarCalibracionMatricial = true;
-            UsarCalibracionMultivariable = false;
-        }
-
-        /// <summary>
-        /// Desactiva la calibración matricial y vuelve al modo simple.
-        /// </summary>
-        public void DesactivarCalibracionMatricial()
-        {
-            calibracionMatricial = null;
-            UsarCalibracionMatricial = false;
-        }
-
         /// <summary>
         /// Configura la compensación de esquinas (excentricidad) con los valores
         /// de cero y factores calculados.
@@ -163,26 +133,6 @@ namespace FormulaGaussExample
             UsarCompensacionEsquinas = true;
             UsarCalibracionMultivariable = false;
             UsarCalibracionMatricial = false;
-        }
-
-        /// <summary>
-        /// Desactiva la compensación de esquinas y vuelve al modo simple.
-        /// </summary>
-        public void DesactivarCompensacionEsquinas()
-        {
-            UsarCompensacionEsquinas = false;
-        }
-
-        /// <summary>Devuelve una copia de los valores de cero para compensación de esquinas.</summary>
-        public double[] ObtenerCerosCompensacion()
-        {
-            return (double[])cerosCompensacion.Clone();
-        }
-
-        /// <summary>Devuelve una copia de los factores de corrección para compensación de esquinas.</summary>
-        public double[] ObtenerFactoresCompensacion()
-        {
-            return (double[])factoresCompensacion.Clone();
         }
 
         /// <summary>
@@ -299,25 +249,36 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Extrae el primer valor numérico (incluyendo signo negativo) encontrado
-        /// en una trama de texto usando una expresión regular.
+        /// Lee el puerto durante una ventana de tiempo acumulando todos los fragmentos recibidos.
+        /// En RS-485 las celdas responden escalonadas, por eso un solo ReadExisting puede dejar fuera S02/S03.
         /// </summary>
-        /// <param name="trama">Trama de texto que contiene un valor numérico.</param>
-        /// <returns>Valor numérico extraído, o 0 si no se encuentra ningún número.</returns>
-        public double ExtraerValorNumerico(string trama)
+        private string LeerRespuestaAcumulada(int timeoutMs, int quietMs = 150)
         {
-            if (string.IsNullOrEmpty(trama))
-                return 0;
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            int elapsed = 0;
+            int quiet = 0;
 
-            MatchCollection matches = Regex.Matches(trama, @"[-+]?\d+\.?\d*");
-            if (matches.Count > 0)
+            while (elapsed < timeoutMs)
             {
-                Match ultimo = matches[matches.Count - 1];
-                if (double.TryParse(ultimo.Value, out double valor))
-                    return valor;
+                string chunk = puerto.ReadExisting();
+                if (!string.IsNullOrEmpty(chunk))
+                {
+                    sb.Append(chunk);
+                    quiet = 0;
+                }
+                else
+                {
+                    quiet += 25;
+                }
+
+                if (sb.Length > 0 && quiet >= quietMs)
+                    break;
+
+                Thread.Sleep(25);
+                elapsed += 25;
             }
 
-            return 0;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -363,8 +324,34 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
+        /// Parsea una respuesta multi-celda del hardware real HBM.
+        /// Formato esperado: "S00;MSV?;+0000000\r\nS01;MSV?;-0029677\r\nS02;MSV?;-0191501\r\nS03;MSV?;+0037845\r\n"
+        /// Retorna un diccionario: addr -> peso_raw_kg
+        /// </summary>
+        public Dictionary<int, double> ExtraerMultiplesPesosHBM(string trama)
+        {
+            var resultados = new Dictionary<int, double>();
+            if (string.IsNullOrEmpty(trama)) return resultados;
+
+            // Buscar TODAS las ocurrencias de S{addr};...;{signo}{7digitos}
+            // Esto funciona tanto con \r\n separando celdas como sin ellos
+            // (porque LimpiarTrama ya removió los \r\n antes de llegar aquí)
+            MatchCollection matches = Regex.Matches(trama, @"S(\d{2});.*?([-+])(\d{7})");
+            foreach (Match m in matches)
+            {
+                if (int.TryParse(m.Groups[1].Value, out int addr) && int.TryParse(m.Groups[3].Value, out int digitos))
+                {
+                    double peso = digitos / 100.0;
+                    if (m.Groups[2].Value == "-") peso = -peso;
+                    resultados[addr] = peso;
+                }
+            }
+            return resultados;
+        }
+
+        /// <summary>
         /// Envía un comando a una celda específica y espera la respuesta.
-        /// Formato del comando: S{dir:D2};{COMANDO};\
+        /// Formato del comando: S{dir:D2}{COMANDO}\r\n
         /// 
         /// La operación está sincronizada con un lock para evitar accesos concurrentes
         /// al puerto serial desde el hilo de la UI y el hilo de DataReceived.
@@ -384,15 +371,14 @@ namespace FormulaGaussExample
                 {
                     comandoEnProgreso = true;
 
-                    // Formato clásico HBM: S01;MSV?;
+                    // Formato HBM real (sin punto y coma extra antes de CRLF)
                     string comandoCompleto = $"S{direccion:D2};{comando};\r\n";
 
                     puerto.DiscardInBuffer();
                     puerto.Write(comandoCompleto);
 
-                    // Esperar la respuesta de la celda (el simulador lee cada 50ms)
-                    Thread.Sleep(250);
-                    string respuesta = puerto.ReadExisting();
+                    // Esperar respuesta acumulada de la celda
+                    string respuesta = LeerRespuestaAcumulada(900);
                     string limpia = LimpiarTrama(respuesta);
 
                     TramaRecibida?.Invoke($"Enviado: {comandoCompleto.Trim()} | Respuesta: {limpia}");
@@ -411,124 +397,6 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Envía datos crudos (CSV/JSON) al simulador a través del puerto serial.
-        /// El simulador interpreta los datos como pesos de celdas S00-S03
-        /// cuando la línea no coincide con un comando del protocolo HBM.
-        /// Formato CSV: "val1,val2,val3,val4" -> S00=val1, S01=val2, S02=val3, S03=val4
-        /// </summary>
-        /// <param name="data">Datos a enviar (ej: "100.0,200.0,150.0,50.0").</param>
-        public void EnviarDatosSimulador(string data)
-        {
-            if (puerto == null || !puerto.IsOpen)
-                return;
-
-            lock (serialLock)
-            {
-                try
-                {
-                    comandoEnProgreso = true;
-                    string linea = data.Trim();
-                    if (!linea.EndsWith("\n"))
-                        linea += "\r\n";
-
-                    puerto.DiscardInBuffer();
-                    puerto.Write(linea);
-                    TramaRecibida?.Invoke($"Simulador <- {linea.Trim()}");
-                }
-                catch (Exception ex)
-                {
-                    TramaRecibida?.Invoke($"ERROR Simulador: {ex.Message}");
-                }
-                finally
-                {
-                    comandoEnProgreso = false;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Consulta el peso de una celda usando el protocolo multi-línea HBM.
-        /// Envía 3 mensajes consecutivos: S98 -> MSV? -> S{dir}
-        /// Esto es requerido para compatibilidad con ciertos firmwares HBM.
-        /// </summary>
-        /// <param name="direccion">Dirección de la celda (0-15).</param>
-        /// <returns>Peso calibrado de la celda en kg.</returns>
-        public double ConsultarPesoMultiLinea(int direccion)
-        {
-            if (puerto == null || !puerto.IsOpen)
-                return 0;
-
-            string limpia = null;
-            double rawWeight = 0;
-            string errorMsg = null;
-
-            // Solo el trabajo serial va dentro del lock
-            lock (serialLock)
-            {
-                try
-                {
-                    comandoEnProgreso = true;
-
-                    puerto.DiscardInBuffer();
-                    puerto.Write($"S98\r\n");
-
-                    puerto.DiscardInBuffer();
-                    puerto.Write($"MSV?\r\n");
-
-                    puerto.DiscardInBuffer();
-                    puerto.Write($"S{direccion:D2}\r\n");
-
-                    Thread.Sleep(50);
-                    string respuesta = puerto.ReadExisting();
-                    limpia = LimpiarTrama(respuesta);
-                    rawWeight = ExtraerPesoHBM(limpia);
-                }
-                catch (Exception ex)
-                {
-                    errorMsg = ex.Message;
-                }
-                finally
-                {
-                    comandoEnProgreso = false;
-                }
-            }
-
-            // Eventos FUERA del lock para evitar deadlocks con Control.Invoke()
-            if (errorMsg != null)
-            {
-                TramaRecibida?.Invoke($"ERROR ML ({direccion:D2}): {errorMsg}");
-                return 0;
-            }
-
-            TramaRecibida?.Invoke($"ML ({direccion:D2}): {limpia}");
-
-            bool respuestaValida = !string.IsNullOrEmpty(limpia)
-                                   && limpia.Length > 0;
-
-            if (!respuestaValida)
-                return 0;
-
-            if (!Celdas.ContainsKey(direccion))
-                Celdas[direccion] = new CeldaInfo { SlaveNumber = direccion };
-
-            Celdas[direccion].RawWeight = rawWeight;
-            Celdas[direccion].LastRead = DateTime.Now;
-            Celdas[direccion].Connected = true;
-
-            if (UsarCalibracionMultivariable && calibracionMultivariable != null)
-            {
-                Celdas[direccion].CalibratedWeight = rawWeight;
-            }
-            else
-            {
-                Celdas[direccion].CalibratedWeight = rawWeight * GetFactorCalibracion(direccion);
-            }
-
-            PesoActualizado?.Invoke(direccion, Celdas[direccion].CalibratedWeight);
-            return Celdas[direccion].CalibratedWeight;
-        }
-
-        /// <summary>
         /// Consulta el peso actual de una celda específica.
         /// Comando enviado: S{dir:D2};MSV?;\
         /// Respuesta esperada: valor numérico del peso en unidades internas.
@@ -541,17 +409,46 @@ namespace FormulaGaussExample
         public double ConsultarPeso(int direccion)
         {
             string respuesta = EnviarComando(direccion, "MSV?");
+
+            var multi = ExtraerMultiplesPesosHBM(respuesta);
+
+            if (multi.Count > 0)
+            {
+                foreach (var kvp in multi)
+                {
+                    int addr = kvp.Key;
+                    double raw = kvp.Value;
+
+                    if (!Celdas.ContainsKey(addr))
+                        Celdas[addr] = new CeldaInfo { SlaveNumber = addr };
+
+                    Celdas[addr].RawWeight = raw;
+                    Celdas[addr].LastRead = DateTime.Now;
+                    Celdas[addr].Connected = true;
+
+                    if (UsarCalibracionMultivariable && calibracionMultivariable != null)
+                        Celdas[addr].CalibratedWeight = raw;
+                    else
+                        Celdas[addr].CalibratedWeight = raw * GetFactorCalibracion(addr);
+
+                    PesoActualizado?.Invoke(addr, Celdas[addr].CalibratedWeight);
+                }
+
+                if (multi.ContainsKey(direccion))
+                    return Celdas[direccion].CalibratedWeight;
+
+                return 0;
+            }
+
             double rawWeight = ExtraerPesoHBM(respuesta);
 
-            // Solo actualizar la celda si la respuesta es válida (tiene un número)
             bool respuestaValida = !string.IsNullOrEmpty(respuesta)
                                    && !respuesta.StartsWith("ERROR")
                                    && !respuesta.StartsWith("?")
-                                   && respuesta.Length > 0;
+                                   && Regex.IsMatch(respuesta, @"\d{4,}");
 
             if (respuestaValida)
             {
-                // Crear entrada para la celda si no existe
                 if (!Celdas.ContainsKey(direccion))
                     Celdas[direccion] = new CeldaInfo { SlaveNumber = direccion };
 
@@ -559,17 +456,10 @@ namespace FormulaGaussExample
                 Celdas[direccion].LastRead = DateTime.Now;
                 Celdas[direccion].Connected = true;
 
-                // En modo multivariable, el peso individual es el raw (sin calibrar)
-                // El peso total se calcula con la fórmula PESO = X1*m1 + X2*m2 + X3*m3 + X4*m4 + B
                 if (UsarCalibracionMultivariable && calibracionMultivariable != null)
-                {
                     Celdas[direccion].CalibratedWeight = rawWeight;
-                }
                 else
-                {
-                    // Modo simple: aplicar factor de calibración individual
                     Celdas[direccion].CalibratedWeight = rawWeight * GetFactorCalibracion(direccion);
-                }
 
                 PesoActualizado?.Invoke(direccion, Celdas[direccion].CalibratedWeight);
 
@@ -621,112 +511,31 @@ namespace FormulaGaussExample
         }
 
         /// <summary>
-        /// Asigna una nueva dirección a una celda identificada por su número de serie.
-        /// Utiliza la dirección especial 98 para emitir el comando de asignación.
-        /// Comando: S98;ADR2,"{NUMERO_SERIE}";\
-        /// Luego verifica el cambio y guarda en EEPROM.
+        /// Inicializa las celdas S00-S03 y les consulta MSV? como alternativa temporal.
+        /// Sin broadcast, sin IDN, sin esperas largas.
+        /// Crea las entradas en el diccionario Celdas si no existen y las marca como Connected.
         /// </summary>
-        /// <param name="nuevaDireccion">Nueva dirección a asignar (1-15).</param>
-        /// <param name="numeroSerie">Número de serie de la celda a reasignar.</param>
-        /// <returns>True si la asignación y verificación fueron exitosas.</returns>
-        public bool AsignarDireccion(int nuevaDireccion, string numeroSerie)
+        /// <returns>Lista de celdas inicializadas.</returns>
+        public List<CeldaInfo> InicializarCeldasTemporal()
         {
-            // Comando según documento: S98;ADR2,"M64702";\
-            string comando = $"ADR2,\"{numeroSerie}\"";
-            string respuesta = EnviarComando(98, comando);
+            var celdasInicializadas = new List<CeldaInfo>();
 
-            if (!string.IsNullOrEmpty(respuesta) && !respuesta.StartsWith("ERROR"))
+            for (int addr = 0; addr <= 3; addr++)
             {
-                // Esperar a que la celda cambie de dirección
-                Thread.Sleep(500);
+                if (!Celdas.ContainsKey(addr))
+                    Celdas[addr] = new CeldaInfo { SlaveNumber = addr };
 
-                // Verificar el cambio consultando la nueva dirección
-                string verificacion = ConsultarSerie(nuevaDireccion);
-                if (!string.IsNullOrEmpty(verificacion) && verificacion.Contains(numeroSerie))
-                {
-                    // Guardar la configuración en la EEPROM de la celda
-                    GuardarEEPROM(nuevaDireccion);
-                    return true;
-                }
-            }
-            return false;
-        }
+                Celdas[addr].Connected = true;
+                Celdas[addr].LastRead = DateTime.Now;
 
-        /// <summary>
-        /// Guarda la configuración actual de la celda en su EEPROM para que
-        /// los cambios persistan después de un ciclo de alimentación.
-        /// Comando: S{dir:D2};TDD1;\
-        /// </summary>
-        /// <param name="direccion">Dirección de la celda.</param>
-        /// <returns>Respuesta de la celda al comando.</returns>
-        public string GuardarEEPROM(int direccion)
-        {
-            return EnviarComando(direccion, "TDD1");
-        }
+                ConsultarPeso(addr);
 
-        /// <summary>
-        /// Enumerar todas las celdas conectadas en el bus RS-485.
-        /// Escanea secuencialmente las direcciones 1 a 15 consultando el número de serie.
-        /// Si una celda responde correctamente, se registra como detectada y se consulta su peso.
-        /// 
-        /// Nota: Este método puede tardar varios segundos (~4.5s) debido a los delays
-        /// de comunicación serial. Se recomienda ejecutarlo en un hilo en segundo plano.
-        /// 
-        /// La dirección 98 es especial y se usa solo para comandos de asignación.
-        /// </summary>
-        /// <returns>Lista de objetos CeldaInfo con las celdas detectadas y sus datos.</returns>
-        public List<CeldaInfo> EnumerarCeldas()
-        {
-            var celdasDetectadas = new List<CeldaInfo>();
-
-            // Escanear direcciones de 0 a 15
-            for (int addr = 0; addr <= 15; addr++)
-            {
-                // 1) Intentar detección por IDN? (número de serie)
-                string respuestaIDN = ConsultarSerie(addr);
-                bool detectada = false;
-
-                if (!string.IsNullOrEmpty(respuestaIDN) &&
-                    !respuestaIDN.StartsWith("ERROR") &&
-                    !respuestaIDN.StartsWith("?") &&
-                    respuestaIDN.Length > 3)
-                {
-                    if (!Celdas.ContainsKey(addr))
-                        Celdas[addr] = new CeldaInfo { SlaveNumber = addr };
-
-                    Celdas[addr].SerialNumber = respuestaIDN;
-                    Celdas[addr].Connected = true;
-                    ConsultarPeso(addr);
-                    celdasDetectadas.Add(Celdas[addr]);
-                    detectada = true;
-                    TramaRecibida?.Invoke($"Celda detectada por IDN: #{addr:D2} - {respuestaIDN}");
-                }
-
-                // 2) Fallback: si IDN? falló, intentar con MSV? (peso)
-                if (!detectada)
-                {
-                    string pesoStr = EnviarComando(addr, "MSV?");
-                    if (!string.IsNullOrEmpty(pesoStr) &&
-                        !pesoStr.StartsWith("ERROR") &&
-                        !pesoStr.StartsWith("?") &&
-                        pesoStr.Length > 0)
-                    {
-                        double peso = ExtraerPesoHBM(pesoStr);
-                        if (!Celdas.ContainsKey(addr))
-                            Celdas[addr] = new CeldaInfo { SlaveNumber = addr };
-
-                        Celdas[addr].RawWeight = peso;
-                        Celdas[addr].CalibratedWeight = peso * GetFactorCalibracion(addr);
-                        Celdas[addr].Connected = true;
-                        Celdas[addr].LastRead = DateTime.Now;
-                        celdasDetectadas.Add(Celdas[addr]);
-                        TramaRecibida?.Invoke($"Celda detectada por MSV: #{addr:D2} - peso={peso}");
-                    }
-                }
+                celdasInicializadas.Add(Celdas[addr]);
+                TramaRecibida?.Invoke($"Celda temporal #{addr:D2} - peso={Celdas[addr].RawWeight}");
             }
 
-            CeldasEnumeradas?.Invoke(celdasDetectadas);
-            return celdasDetectadas;
+            CeldasEnumeradas?.Invoke(celdasInicializadas);
+            return celdasInicializadas;
         }
 
         /// <summary>
@@ -796,73 +605,5 @@ namespace FormulaGaussExample
             return pesoTotal;
         }
 
-        /// <summary>
-        /// Calibra el sistema completo aplicando un peso conocido de referencia.
-        /// 
-        /// Calcula un factor de calibración único para todo el sistema basado en:
-        /// factor = pesoConocido / suma(pesosRaw)
-        /// Este factor se aplica a todas las celdas por igual.
-        /// 
-        /// Si se requiere calibración individual por celda, se necesitaría
-        /// un peso conocido aplicado a cada celda por separado.
-        /// </summary>
-        /// <param name="pesoConocido">Peso de referencia conocido en kg, colocado sobre la báscula.</param>
-        /// <returns>
-        /// Diccionario con los factores de calibración calculados para cada celda,
-        /// o diccionario vacío si no se pudo calibrar.
-        /// </returns>
-        public Dictionary<int, double> CalibrarSistema(double pesoConocido)
-        {
-            Dictionary<int, double> factores = new Dictionary<int, double>();
-            double pesoRawTotal = 0;
-            int celdasActivas = 0;
-
-            // Primero, obtener el peso raw actual de todas las celdas
-            foreach (var celda in Celdas.Values)
-            {
-                if (celda.Connected)
-                {
-                    // Consultar peso raw nuevamente para asegurar datos actualizados
-                    string respuesta = EnviarComando(celda.SlaveNumber, "MSV?");
-                    double rawWeight = ExtraerValorNumerico(respuesta);
-                    celda.RawWeight = rawWeight;
-
-                    if (rawWeight > 0)
-                    {
-                        pesoRawTotal += rawWeight;
-                        celdasActivas++;
-                    }
-                }
-            }
-
-            // Calcular factor único del sistema si hay datos válidos
-            if (pesoRawTotal > 0 && celdasActivas > 0)
-            {
-                double factorSistema = pesoConocido / pesoRawTotal;
-
-                foreach (var celda in Celdas.Values)
-                {
-                    if (celda.Connected)
-                    {
-                        SetFactorCalibracion(celda.SlaveNumber, factorSistema);
-                        celda.CalibratedWeight = celda.RawWeight * factorSistema;
-                        factores[celda.SlaveNumber] = factorSistema;
-                    }
-                }
-            }
-
-            return factores;
-        }
-
-        /// <summary>
-        /// Verifica si hay comunicación con una celda consultando su número de serie.
-        /// </summary>
-        /// <param name="direccion">Dirección de la celda a verificar (1-15).</param>
-        /// <returns>True si la celda responde con una identificación válida.</returns>
-        public bool VerificarComunicacion(int direccion)
-        {
-            string respuesta = ConsultarSerie(direccion);
-            return !string.IsNullOrEmpty(respuesta) && !respuesta.StartsWith("ERROR");
-        }
     }
 }

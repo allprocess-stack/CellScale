@@ -45,7 +45,7 @@
             // 
             this.txtViewCelda1.BackColor = System.Drawing.Color.White;
             this.txtViewCelda1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.txtViewCelda1.Location = new System.Drawing.Point(20, 50);
+            this.txtViewCelda1.Location = new System.Drawing.Point(85, 47);
             this.txtViewCelda1.Name = "txtViewCelda1";
             this.txtViewCelda1.ReadOnly = true;
             this.txtViewCelda1.Size = new System.Drawing.Size(110, 29);
@@ -57,19 +57,20 @@
             // 
             this.txtViewCelda2.BackColor = System.Drawing.Color.White;
             this.txtViewCelda2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.txtViewCelda2.Location = new System.Drawing.Point(150, 50);
+            this.txtViewCelda2.Location = new System.Drawing.Point(299, 47);
             this.txtViewCelda2.Name = "txtViewCelda2";
             this.txtViewCelda2.ReadOnly = true;
             this.txtViewCelda2.Size = new System.Drawing.Size(110, 29);
             this.txtViewCelda2.TabIndex = 5;
             this.txtViewCelda2.Text = "---";
             this.txtViewCelda2.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.txtViewCelda2.TextChanged += new System.EventHandler(this.txtViewCelda2_TextChanged);
             // 
             // txtViewCelda3
             // 
             this.txtViewCelda3.BackColor = System.Drawing.Color.White;
             this.txtViewCelda3.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.txtViewCelda3.Location = new System.Drawing.Point(280, 50);
+            this.txtViewCelda3.Location = new System.Drawing.Point(85, 118);
             this.txtViewCelda3.Name = "txtViewCelda3";
             this.txtViewCelda3.ReadOnly = true;
             this.txtViewCelda3.Size = new System.Drawing.Size(110, 29);
@@ -81,21 +82,20 @@
             // 
             this.txtViewCelda4.BackColor = System.Drawing.Color.White;
             this.txtViewCelda4.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.txtViewCelda4.Location = new System.Drawing.Point(410, 50);
+            this.txtViewCelda4.Location = new System.Drawing.Point(299, 118);
             this.txtViewCelda4.Name = "txtViewCelda4";
             this.txtViewCelda4.ReadOnly = true;
             this.txtViewCelda4.Size = new System.Drawing.Size(110, 29);
             this.txtViewCelda4.TabIndex = 7;
             this.txtViewCelda4.Text = "---";
             this.txtViewCelda4.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            //this.txtViewCelda4.TextChanged += new System.EventHandler(this.txtViewCelda4_TextChanged);
             // 
             // label1
             // 
             this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.label1.Location = new System.Drawing.Point(20, 20);
+            this.label1.Location = new System.Drawing.Point(49, 12);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(100, 20);
+            this.label1.Size = new System.Drawing.Size(181, 20);
             this.label1.TabIndex = 0;
             this.label1.Text = "Celda S00";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -103,9 +103,9 @@
             // label2
             // 
             this.label2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.label2.Location = new System.Drawing.Point(150, 20);
+            this.label2.Location = new System.Drawing.Point(257, 17);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(100, 20);
+            this.label2.Size = new System.Drawing.Size(193, 20);
             this.label2.TabIndex = 1;
             this.label2.Text = "Celda S01";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -113,9 +113,9 @@
             // label3
             // 
             this.label3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.label3.Location = new System.Drawing.Point(280, 20);
+            this.label3.Location = new System.Drawing.Point(49, 88);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(100, 20);
+            this.label3.Size = new System.Drawing.Size(181, 20);
             this.label3.TabIndex = 2;
             this.label3.Text = "Celda S02";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -123,16 +123,16 @@
             // label4
             // 
             this.label4.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.label4.Location = new System.Drawing.Point(410, 20);
+            this.label4.Location = new System.Drawing.Point(254, 88);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(100, 20);
+            this.label4.Size = new System.Drawing.Size(196, 20);
             this.label4.TabIndex = 3;
             this.label4.Text = "Celda S03";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // ViewWeightCeldas
             // 
-            this.ClientSize = new System.Drawing.Size(620, 120);
+            this.ClientSize = new System.Drawing.Size(532, 174);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label3);

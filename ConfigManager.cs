@@ -40,12 +40,15 @@ namespace FormulaGaussExample
                         COMBalanza = "COM3",
                         CalibracionBalanza = "10000"
                     };
+                    AplicarDefaults(configDefault);
                     GuardarConfig(configDefault);
                     return configDefault;
                 }
 
                 string json = File.ReadAllText(rutaArchivoConfig);
-                return JsonSerializer.Deserialize<AppConfig>(json);
+                var config = JsonSerializer.Deserialize<AppConfig>(json);
+                AplicarDefaults(config);
+                return config;
             }
             catch (Exception e)
             {
@@ -74,6 +77,21 @@ namespace FormulaGaussExample
                 MessageBox.Show($"Error al guardar config.json: {e.Message}",
                     "Error de configuración", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private static void AplicarDefaults(AppConfig config)
+        {
+            if (config == null) return;
+
+            if (config.FactoresCalibracion == null)
+                config.FactoresCalibracion = new System.Collections.Generic.Dictionary<string, double>();
+
+            if (string.IsNullOrWhiteSpace(config.Celda1)) config.Celda1 = "S00";
+            if (string.IsNullOrWhiteSpace(config.Celda2)) config.Celda2 = "S01";
+            if (string.IsNullOrWhiteSpace(config.Celda3)) config.Celda3 = "S02";
+            if (string.IsNullOrWhiteSpace(config.Celda4)) config.Celda4 = "S03";
+
+            config.Celdas = $"{config.Celda1},{config.Celda2},{config.Celda3},{config.Celda4}";
         }
     }
 }

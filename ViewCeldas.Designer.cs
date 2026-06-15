@@ -402,7 +402,7 @@
             this.groupBox2.Size = new System.Drawing.Size(457, 290);
             this.groupBox2.TabIndex = 34;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Monitoreo de Celdas";
+            this.groupBox2.Text = "///";
             // 
             // ViewCeldas
             // 
