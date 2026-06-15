@@ -839,10 +839,10 @@ namespace FormulaGaussExample
 
                 for (int i = 0; i < 4; i++)
                 {
-                    double peso = await Task.Run(() => manager.ConsultarPeso(celdas[i].SlaveNumber));
+                    double peso = await Task.Run(() => manager.ConsultarPeso(i));
                     double raw = celdas[i].RawWeight;
                     ceros[i] = raw;
-                    System.Diagnostics.Debug.WriteLine($"[btnCeroCalibracion] celda S{celdas[i].SlaveNumber:D2}: peso={peso}, raw={raw}");
+                    System.Diagnostics.Debug.WriteLine($"[btnCeroCalibracion] celda S{i:D2}: peso={peso}, raw={raw}");
                     ObtenerTextBox(i).Text = $"Z={raw:F2} kg";
                 }
 
@@ -901,9 +901,9 @@ namespace FormulaGaussExample
                 double[] rawReadings = new double[4];
                 for (int i = 0; i < 4; i++)
                 {
-                    double peso = await Task.Run(() => manager.ConsultarPeso(celdas[i].SlaveNumber));
+                    double peso = await Task.Run(() => manager.ConsultarPeso(i));
                     rawReadings[i] = celdas[i].RawWeight;
-                    System.Diagnostics.Debug.WriteLine($"[CapturarEsquina] S{celdas[i].SlaveNumber:D2}: peso={peso}, raw={rawReadings[i]}");
+                    System.Diagnostics.Debug.WriteLine($"[CapturarEsquina] S{i:D2}: peso={peso}, raw={rawReadings[i]}");
                 }
 
                 double sumaNeta = 0;
@@ -1013,11 +1013,10 @@ namespace FormulaGaussExample
                 double[] lecturas = new double[4];
                 for (int i = 0; i < 4; i++)
                 {
-                    int addr = celdasGauss[i].SlaveNumber;
-                    double peso = await Task.Run(() => manager.ConsultarPeso(addr));
+                    double peso = await Task.Run(() => manager.ConsultarPeso(i));
                     double raw = 0;
-                    if (manager.Celdas.ContainsKey(addr))
-                        raw = manager.Celdas[addr].RawWeight;
+                    if (manager.Celdas.ContainsKey(i))
+                        raw = manager.Celdas[i].RawWeight;
                     lecturas[i] = raw;
                 }
 
@@ -1197,7 +1196,7 @@ namespace FormulaGaussExample
                     return;
                 }
 
-                await Task.Run(() => manager.ConsultarPeso(celda.SlaveNumber));
+                await Task.Run(() => manager.ConsultarPeso(idx));
                 ceros[idx] = celda.RawWeight;
                 cerosCapturados = true;
 
@@ -1333,7 +1332,7 @@ namespace FormulaGaussExample
                     lblEstadoCalibracion.Text = "Capturando cero en todas las celdas...";
                     for (int i = 0; i < celdas.Count; i++)
                     {
-                        await Task.Run(() => manager.ConsultarPeso(celdas[i].SlaveNumber));
+                        await Task.Run(() => manager.ConsultarPeso(i));
                         ceros[i] = celdas[i].RawWeight;
                         ObtenerTextBox(i).Text = $"Z={ceros[i]:F2} kg";
                     }
@@ -1359,7 +1358,7 @@ namespace FormulaGaussExample
 
                 for (int i = 0; i < celdas.Count; i++)
                 {
-                    await Task.Run(() => manager.ConsultarPeso(celdas[i].SlaveNumber));
+                    await Task.Run(() => manager.ConsultarPeso(i));
                     rawReadings[i] = celdas[i].RawWeight;
                 }
 
@@ -1450,7 +1449,7 @@ namespace FormulaGaussExample
                 double sumaRaw = 0;
                 for (int i = 0; i < celdas.Count; i++)
                 {
-                    await Task.Run(() => manager.ConsultarPeso(celdas[i].SlaveNumber));
+                    await Task.Run(() => manager.ConsultarPeso(i));
                     sumaRaw += celdas[i].RawWeight;
                 }
 

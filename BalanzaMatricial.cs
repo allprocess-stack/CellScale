@@ -9,12 +9,6 @@ namespace FormulaGaussExample
         /// <summary>Indica si la balanza tiene coeficientes de calibración cargados.</summary>
         public bool EstaCalibrado => coeficientes != null && coeficientes.Length == 4;
 
-        /// <summary>Devuelve los 4 coeficientes de corrección matricial.</summary>
-        public double[] ObtenerCoeficientes()
-        {
-            return coeficientes;
-        }
-
         /// <summary>Establece los 4 coeficientes de corrección matricial.</summary>
         /// <param name="coefs">Arreglo de 4 coeficientes double.</param>
         public void EstablecerCoeficientes(double[] coefs)

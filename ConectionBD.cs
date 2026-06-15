@@ -85,13 +85,5 @@ namespace FormulaGaussExample
             }
         }
 
-        /// <summary>
-        /// Obtiene la conexión MySQL subyacente para operaciones avanzadas.
-        /// </summary>
-        /// <returns>Objeto MySqlConnection activo.</returns>
-        public MySqlConnection ObtenerConexion()
-        {
-            return conexion;
-        }
     }
 }
