@@ -131,9 +131,6 @@ Tablas:
 - MySql.Data para conexión MySQL
 - System.Text.Json para persistencia
 
-## Registro de Cambios
-
-- `docs/cambios.md` — Historial de cambios del proyecto
-- `cambios_realizados.md` — Cambios realizados
-- `CAMBIOS A REALIZAR.md` — Pendientes por implementar
-- `INFORME_CAMBIOS.md` — Informe detallado de cambios
+--
+Desarrollado por: Anthony Josue Laura Perez
+GitHub : https://github.com/anthony2004lp
